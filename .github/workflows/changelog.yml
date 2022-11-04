@@ -29,13 +29,8 @@ on:
       - 'VERSION'
 
 jobs:
-  changelog:
+  version:
     runs-on: ubuntu-latest
-    outputs:
-      index: ${{ steps.filter.outputs.index }}
-      action: ${{ steps.filter.outputs.action }}
-      dist: ${{ steps.filter.outputs.dist }}
-      version: ${{ steps.changelog.outputs.version }}
     steps:
       - name: Latest tag
         id: get-latest-tag
@@ -51,11 +46,8 @@ jobs:
           changelog-path: CHANGELOG.md
           version-path: VERSION
           token: ${{ secrets.COVALENT_OPS_BOT_TOKEN }}
-          basehead: ${{ steps.get-latest-tag.outputs.tag }}...${{ github.sha }}
-      - name: Commit
-        if: ${{ steps.changelog.outputs.message != 'noop' }}
-        uses: EndBug/add-and-commit@v9
-        with:
+          branch: develop
+          stable: false
           author_name: CovalentOpsBot
           author_email: covalentopsbot@users.noreply.github.com
           message: ${{ steps.changelog.outputs.message }}
