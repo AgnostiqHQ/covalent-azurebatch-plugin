@@ -23,7 +23,7 @@
 import covalent as ct
 from covalent._workflow.transport import TransportableObject
 import covalent._results_manager.results_manager as rm
-from covalent_executor_template.custom_async import CustomAsyncExecutor
+from covalent_azurebatch_plugin.custom_async import CustomAsyncExecutor
 from functools import partial
 from covalent.executor.base import wrapper_fn
 import pytest
