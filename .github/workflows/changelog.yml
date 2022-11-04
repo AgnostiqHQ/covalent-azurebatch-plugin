@@ -45,7 +45,7 @@ jobs:
             action:
               - 'AgnostiqHQ/covalent/.github/actions/changelog/action.yml'
             dist:
-              - '.github/actions/changelog/dist/**'
+              - 'AgnostiqHQ/covalent/.github/actions/changelog/dist/**'
       - name: Latest tag
         id: get-latest-tag
         uses: AgnostiqHQ/covalent/.github/actions/describe
