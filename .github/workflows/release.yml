@@ -171,10 +171,11 @@ jobs:
           rm -rf covalent-azurebatch-plugin-${VERSION}/
       - name: Upload Distribution
         if: >
-          steps.pre-build.outcome == 'success'
+          false
+          && (steps.pre-build.outcome == 'success'
           || steps.stable-build.outcome == 'success'
           && steps.validate.outcome == 'success'
-          && ${{ !github.event.inputs.test_release }}
+          && ${{ !github.event.inputs.test_release }})
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
