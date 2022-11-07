@@ -41,7 +41,7 @@ jobs:
           stable: false
       - name: Update version number
         id: changelog
-        uses: AgnostiqHQ/covalent/.github/actions/changelog
+        uses: AgnostiqHQ/covalent/.github/actions/changelog@develop
         with:
           changelog-path: CHANGELOG.md
           version-path: VERSION
