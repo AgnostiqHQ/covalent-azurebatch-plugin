@@ -18,5 +18,5 @@
 #
 # Relief from the License may be granted by purchasing a commercial license.
 
-def placeholder_test():
+def test_validate_credentials():
     pass
