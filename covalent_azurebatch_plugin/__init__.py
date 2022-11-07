@@ -17,10 +17,3 @@
 # FITNESS FOR A PARTICULAR PURPOSE. See the License for more details.
 #
 # Relief from the License may be granted by purchasing a commercial license.
-
-# Include any dependencies for the plugin in this file.
-
-azure-identity==1.11.0
-azure-batch==12.0.0
-azure-storage-blob==12.14.1
-covalent>=0.202.0

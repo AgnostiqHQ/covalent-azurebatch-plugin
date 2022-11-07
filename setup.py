@@ -33,23 +33,20 @@ with open("VERSION") as f:
 with open("requirements.txt") as f:
     required = f.read().splitlines()
 
-# Modify this to be the name of your plugin file. Here, "covalent_executor_template"
-# is the name of the directory the plugin is in. "custom" is name of the module.
-plugins_list = ["custom = covalent_executor_template.custom", "custom_async = covalent_executor_template.custom_async"]
+plugins_list = ["azurebatch = covalent_azurebatch_plugin.azurebatch"]
+
 
 setup_info = {
-    # Your plugin should use the naming convention 'covalent-abcdef-plugin'
-    "name": "covalent-executor-template",
+    "name": "covalent-azurebatch-plugin",
     "packages": find_packages("."),
     "version": version,
-    # Modify any contact information as you see fit
     "maintainer": "Agnostiq",
-    "url": "https://github.com/AgnostiqHQ/covalent-executor-template",
-    "download_url": f"https://github.com/AgnostiqHQ/covalent-executor-template/archive/v{version}.tar.gz",
+    "url": "https://github.com/AgnostiqHQ/covalent-azurebatch-plugin",
+    "download_url": f"https://github.com/AgnostiqHQ/covalent-azurebatch-plugin/archive/v{version}.tar.gz",
     "license": "GNU Affero GPL v3.0",
     "author": "Agnostiq",
     "author_email": "support@agnostiq.ai",
-    "description": "Covalent Custom Executor Plugin",
+    "description": "Covalent Microsoft Azure Batch Plugin",
     "long_description": open("README.md").read(),
     "long_description_content_type": "text/markdown",
     "include_package_data": True,
