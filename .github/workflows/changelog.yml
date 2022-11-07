@@ -31,6 +31,11 @@ on:
 jobs:
   changelog:
     runs-on: ubuntu-latest
+    outputs:
+      index: ${{ steps.filter.outputs.index }}
+      action: ${{ steps.filter.outputs.action }}
+      dist: ${{ steps.filter.outputs.dist }}
+      version: ${{ steps.changelog.outputs.version }}
     steps:
       - name: Latest tag
         id: get-latest-tag
@@ -45,5 +50,5 @@ jobs:
         with:
           author_name: CovalentOpsBot
           author_email: covalentopsbot@users.noreply.github.com
-          message: ${{ env.MESSAGE }}
+          message: ${{ steps.changelog.outputs.message }}
           push: origin develop --force
