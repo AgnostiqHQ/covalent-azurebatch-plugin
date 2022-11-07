@@ -34,7 +34,7 @@ jobs:
     steps:
       - name: Latest tag
         id: get-latest-tag
-        uses: AgnostiqHQ/covalent/.github/actions/describe
+        uses: AgnostiqHQ/covalent/.github/actions/describe@develop
         with:
           token: ${{ secrets.COVALENT_OPS_BOT_TOKEN }}
           branch: develop
