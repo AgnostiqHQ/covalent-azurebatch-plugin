@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## [0.3.0] - 2022-11-08
+
+### Fixed
+
+- Changelog workflow.
+- Attempt to fix non-linear commit history by rebasing onto develop
+
+### Changed
+
+- Updated `placeholder_test` to `test_validate_credentials`
+
 ### Operations
 
 - Added CI workflows.
