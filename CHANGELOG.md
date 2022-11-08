@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Changelog workflow.
 - Attempt to fix non-linear commit history by rebasing onto develop
 
 ### Changed
