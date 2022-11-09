@@ -20,14 +20,16 @@
 
 """Azure Batch executor for the Covalent Dispatcher."""
 
+import os
+
 from covalent.executor.executor_plugins.remote_executor import RemoteExecutor
 from covalent._shared_files.config import get_config
 from covalent._shared_files.logger import app_log
 
 _EXECUTOR_PLUGIN_DEFAULTS = {
-    "tenant_id": "",
-    "client_id": "",
-    "client_secret": "",
+    "tenant_id": "" or os.environ.get("AZURE_TENANT_ID"),
+    "client_id": "" or os.environ.get("AZURE_CLIENT_ID"),
+    "client_secret": "" or os.environ.get("AZURE_CLIENT_SECRET"),
     "batch_account_url": "",
     "storage_account_name": "",
     "storage_account_domain": "blob.core.windows.net",
@@ -56,18 +58,18 @@ class AzureBatchExecutor(RemoteExecutor):
 
     def __init__(self, tenant_id: str = None, client_id: str = None, client_secret: str = None, batch_account_url: str = None, storage_account_name: str = None, storage_account_domain: str = None, pool_id: str = None, job_id: str = None, retries: int = None, time_limit: float = None, cache_dir: str = None, poll_freq: int = None) -> None:
         """Azure Batch executor initialization."""
-        self.tenant_id = tenant_id
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.batch_account_url = batch_account_url
-        self.storage_account_name = storage_account_name
-        self.storage_account_domain = storage_account_domain
-        self.pool_id = pool_id
-        self.job_id = job_id
-        self.retries = retries
-        self.time_limit = time_limit
-        self.cache_dir = cache_dir
-        self.poll_freq = poll_freq
+        self.tenant_id = tenant_id or get_config("executors.azurebatch.tenant_id")
+        self.client_id = client_id or get_config("executors.azurebatch.client_id")
+        self.client_secret = client_secret or get_config("executors.azurebatch.client_secret")
+        self.batch_account_url = batch_account_url or get_config("executors.azurebatch.batch_account_url")
+        self.storage_account_name = storage_account_name or get_config("executors.azurebatch.storage_account_name")
+        self.storage_account_domain = storage_account_domain or get_config("executors.azurebatch.storage_account_domain")
+        self.pool_id = pool_id or get_config("executors.azurebatch.pool_id")
+        self.job_id = job_id or get_config("executors.azurebatch.job_id")
+        self.retries = retries or get_config("executors.azurebatch.retries")
+        self.time_limit = time_limit or get_config("executors.azurebatch.time_limit")
+        self.cache_dir = cache_dir or get_config("executors.azurebatch.cache_dir")
+        self.poll_freq = poll_freq or get_config("executors.azurebatch.poll_freq")
 
 
     # TODO - Add return type        
