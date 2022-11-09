@@ -50,11 +50,7 @@ COVALENT_EXEC_BASE_URI = ""
 
 
 class AzureBatchExecutor(RemoteExecutor):
-    """_summary_
-
-    Args:
-        RemoteExecutor (_type_): _description_
-    """
+    """Microsoft Azure Batch Executor."""
 
     def __init__(self, tenant_id: str = None, client_id: str = None, client_secret: str = None, batch_account_url: str = None, storage_account_name: str = None, storage_account_domain: str = None, pool_id: str = None, job_id: str = None, retries: int = None, time_limit: float = None, cache_dir: str = None, poll_freq: int = None) -> None:
         """Azure Batch executor initialization."""
