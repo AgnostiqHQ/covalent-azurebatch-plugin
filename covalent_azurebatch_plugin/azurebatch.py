@@ -21,6 +21,8 @@
 """Azure Batch executor for the Covalent Dispatcher."""
 
 from covalent.executor.executor_plugins.remote_executor import RemoteExecutor
+from covalent._shared_files.config import get_config
+from covalent._shared_files.logger import app_log
 
 _EXECUTOR_PLUGIN_DEFAULTS = {
     "tenant_id": "",
@@ -52,10 +54,29 @@ class AzureBatchExecutor(RemoteExecutor):
         RemoteExecutor (_type_): _description_
     """
 
-    def __init__(self, tenant_id, client_id, client_secret, batch_account_url, storage_account_name, storage_account_domain, pool_id, job_id, retries, time_limit, cache_dir, poll_freq):
-        pass
+    def __init__(self, tenant_id: str = None, client_id: str = None, client_secret: str = None, batch_account_url: str = None, storage_account_name: str = None, storage_account_domain: str = None, pool_id: str = None, job_id: str = None, retries: int = None, time_limit: float = None, cache_dir: str = None, poll_freq: int = None) -> None:
+        """Azure Batch executor initialization."""
+        self.tenant_id = tenant_id
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.batch_account_url = batch_account_url
+        self.storage_account_name = storage_account_name
+        self.storage_account_domain = storage_account_domain
+        self.pool_id = pool_id
+        self.job_id = job_id
+        self.retries = retries
+        self.time_limit = time_limit
+        self.cache_dir = cache_dir
+        self.poll_freq = poll_freq
 
-    def _validate_credentials(self, raise_exception):
+
+    # TODO - Add return type        
+    def _validate_credentials(self, raise_exception: bool = True):
+        """Validate user-specified Microsoft Azure credentials or environment variables (configured before starting the server). Note: credentials passed should be those of a service principal rather than a developer account. 
+
+        Args:
+            raise_exception (bool, optional): _description_. Defaults to True.
+        """
         pass
 
     def _debug_log(self, message):
