@@ -21,6 +21,7 @@
 """Azure Batch executor for the Covalent Dispatcher."""
 
 import os
+from typing import Union
 
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from covalent._shared_files.config import get_config
@@ -91,12 +92,30 @@ class AzureBatchExecutor(RemoteExecutor):
         self.cache_dir = cache_dir or get_config("executors.azurebatch.cache_dir")
         self.poll_freq = poll_freq or get_config("executors.azurebatch.poll_freq")
 
-    # TODO - Add return type
-    def _validate_credentials(self, raise_exception: bool = True):
+        config = {
+            "tenant_id": self.tenant_id,
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+            "batch_account_url": self.batch_account_url,
+            "storage_account_name": self.storage_account_name,
+            "storage_account_domain": self.storage_account_domain,
+            "pool_id": self.pool_id,
+            "job_id": self.job_id,
+            "retries": self.retries,
+            "time_limit": self.time_limit,
+            "cache_dir": self.cache_dir,
+            "poll_freq": self.poll_freq,
+        }
+        self._debug_log("Starting Azure Batch Executor with config:")
+        self._debug_log(config)
+
+    def _validate_credentials(
+        self, raise_exception: bool = True
+    ) -> Union[bool, DefaultAzureCredential, ClientSecretCredential]:
         """Validate user-specified Microsoft Azure credentials or environment variables (configured before starting the server). Note: credentials passed should be those of a service principal rather than a developer account.
 
         Args:
-            raise_exception (bool, optional): _description_. Defaults to True.
+            raise_exception (bool, optional): Status of whether to raise exception. Defaults to True.
         """
         try:
             if self.tenant_id and self.client_id and self.client_secret:
@@ -109,8 +128,9 @@ class AzureBatchExecutor(RemoteExecutor):
             else:
                 return False
 
-    def _debug_log(self, message):
-        pass
+    def _debug_log(self, message: str) -> None:
+        """Debug log message template."""
+        app_log.debug(f"Azure Batch Executor: {message}")
 
     async def run(self, function, args, kwargs, task_metadata):
         pass
