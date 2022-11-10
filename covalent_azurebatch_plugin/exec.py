@@ -19,15 +19,16 @@
 # Relief from the License may be granted by purchasing a commercial license.
 
 import os
+
+import cloudpickle as pickle
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
-import cloudpickle as pickle
 
-azure_storage_account = os.getenv("AZURE_STORAGE_ACCOUNT")
+azure_storage_account = os.getenv("AZURE_BLOB_STORAGE_ACCOUNT")
 if not azure_storage_account:
     raise ValueError("Environment variable AZURE_STORAGE_CONTAINER was not found")
 
-azure_storage_container = os.getenv("AZURE_STORAGE_CONTAINER")
+azure_storage_container = os.getenv("AZURE_BLOB_STORAGE_CONTAINER")
 if not azure_storage_container:
     raise ValueError("Environment variable AZURE_STORAGE_CONTAINER was not found")
 
