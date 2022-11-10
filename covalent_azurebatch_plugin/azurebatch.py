@@ -21,7 +21,7 @@
 """Azure Batch executor for the Covalent Dispatcher."""
 
 import os
-from typing import Union
+from typing import Callable, Dict, List, Union
 
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from covalent._shared_files.config import get_config
@@ -132,8 +132,30 @@ class AzureBatchExecutor(RemoteExecutor):
         """Debug log message template."""
         app_log.debug(f"Azure Batch Executor: {message}")
 
-    async def run(self, function, args, kwargs, task_metadata):
-        pass
+    async def run(self, function: Callable, args: List, kwargs: Dict, task_metadata: Dict) -> None:
+        """Main run method for the Azure Batch executor."""
+        dispatch_id = task_metadata["dispatch_id"]
+        node_id = task_metadata["node_id"]
+
+        self._debug_log(f"Executing Dispatch ID {dispatch_id} Node {node_id}...")
+
+        self._debug_log("Validating credentials...")
+        identity = self._validate_credentials()
+
+        self._debug_log("Uploading task to Azure blob storage...")
+        await self._upload_task(function, args, kwargs, task_metadata)
+
+        self._debug_log("Submitting task to Azure Batch...")
+        task_submission_metadata = await self._submit_task(task_metadata, identity)
+
+        self._debug_log(f"Task submission metadata: {task_submission_metadata}")
+
+        # TODO - get job id correctly from task_submission_metadata - temporary place holder
+        job_id = task_submission_metadata["job_id"]
+        await self._poll_task(job_id)
+
+        self._debug_log("Querying result...")
+        return await self.query_result(task_metadata)
 
     async def _upload_task(self, function, args, kwargs, task_metadata):
         pass
