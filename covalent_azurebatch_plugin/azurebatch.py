@@ -22,12 +22,16 @@
 
 import os
 
+from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from covalent._shared_files.config import get_config
 from covalent._shared_files.logger import app_log
 from covalent.executor.executor_plugins.remote_executor import RemoteExecutor
 
 _EXECUTOR_PLUGIN_DEFAULTS = {
-    "tenant_id": "" or os.environ.get("AZURE_TENANT_ID"),
+    "tenant_id": ""
+    or os.environ.get(
+        "AZURE_TENANT_ID"
+    ),  # Do we need to set these as defaults? The reason being that the DefaultAzureCredential reads these environment variable automatically.
     "client_id": "" or os.environ.get("AZURE_CLIENT_ID"),
     "client_secret": "" or os.environ.get("AZURE_CLIENT_SECRET"),
     "batch_account_url": "",
@@ -94,7 +98,16 @@ class AzureBatchExecutor(RemoteExecutor):
         Args:
             raise_exception (bool, optional): _description_. Defaults to True.
         """
-        pass
+        try:
+            if self.tenant_id and self.client_id and self.client_secret:
+                return ClientSecretCredential(self.tenant_id, self.client_id, self.client_secret)
+            else:
+                return DefaultAzureCredential()
+        except Exception as e:
+            if raise_exception:
+                raise e
+            else:
+                return False
 
     def _debug_log(self, message):
         pass
