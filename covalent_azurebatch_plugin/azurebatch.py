@@ -20,21 +20,22 @@
 
 """Azure Batch executor for the Covalent Dispatcher."""
 
-import os
-from typing import Callable, Dict, List, Union
+import asyncio
+import time
+from typing import Callable, Dict, List, Tuple, Union
 
+from azure.batch import BatchServiceClient
+from azure.batch.models import batchmodels
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
+from azure.storage.blob import BlobServiceClient
 from covalent._shared_files.config import get_config
 from covalent._shared_files.logger import app_log
 from covalent.executor.executor_plugins.remote_executor import RemoteExecutor
 
 _EXECUTOR_PLUGIN_DEFAULTS = {
-    "tenant_id": ""
-    or os.environ.get(
-        "AZURE_TENANT_ID"
-    ),  # Do we need to set these as defaults? The reason being that the DefaultAzureCredential reads these environment variable automatically.
-    "client_id": "" or os.environ.get("AZURE_CLIENT_ID"),
-    "client_secret": "" or os.environ.get("AZURE_CLIENT_SECRET"),
+    "tenant_id": "",
+    "client_id": "",
+    "client_secret": "",
     "batch_account_url": "",
     "storage_account_name": "",
     "storage_account_domain": "blob.core.windows.net",
@@ -109,6 +110,19 @@ class AzureBatchExecutor(RemoteExecutor):
         self._debug_log("Starting Azure Batch Executor with config:")
         self._debug_log(config)
 
+    def _get_blob_client(self, credentials) -> BlobServiceClient:
+        """Get Azure Blob client."""
+        self._debug_log("Initializing blob client...")
+        return BlobServiceClient(
+            account_url=f"https://{self.storage_account_name}.{self.storage_account_domain}/",
+            credentials=credentials,
+        )
+
+    def _get_batch_service_client(self, credentials) -> BatchServiceClient:
+        """Get Azure Batch client."""
+        self._debug_log("Initializing batch client...")
+        return BatchServiceClient(credentials=credentials, batch_url=self.batch_account_url)
+
     def _validate_credentials(
         self, raise_exception: bool = True
     ) -> Union[bool, DefaultAzureCredential, ClientSecretCredential]:
@@ -119,14 +133,18 @@ class AzureBatchExecutor(RemoteExecutor):
         """
         try:
             if self.tenant_id and self.client_id and self.client_secret:
+                self._debug_log("Returning credentials from user-specified values.")
                 return ClientSecretCredential(self.tenant_id, self.client_id, self.client_secret)
             else:
+                self._debug_log("Returning default credentials.")
                 return DefaultAzureCredential()
         except Exception as e:
             if raise_exception:
                 raise e
-            else:
-                return False
+            self._debug_log(
+                f"Failed to validate credentials. Check credentials or that the environment variables were set before starting the Covalent server. Exception raised: {e}"
+            )
+            return False
 
     def _debug_log(self, message: str) -> None:
         """Debug log message template."""
@@ -140,18 +158,15 @@ class AzureBatchExecutor(RemoteExecutor):
         self._debug_log(f"Executing Dispatch ID {dispatch_id} Node {node_id}...")
 
         self._debug_log("Validating credentials...")
-        identity = self._validate_credentials()
+        credential = self._validate_credentials()
 
         self._debug_log("Uploading task to Azure blob storage...")
         await self._upload_task(function, args, kwargs, task_metadata)
 
-        self._debug_log("Submitting task to Azure Batch...")
-        task_submission_metadata = await self._submit_task(task_metadata, identity)
+        self._debug_log("Submitting task to Batch service...")
+        job_id = await self._submit_task(task_metadata, credential)
 
-        self._debug_log(f"Task submission metadata: {task_submission_metadata}")
-
-        # TODO - get job id correctly from task_submission_metadata - temporary place holder
-        job_id = task_submission_metadata["job_id"]
+        self._debug_log(f"Job id: {job_id}")
         await self._poll_task(job_id)
 
         self._debug_log("Querying result...")
@@ -160,14 +175,27 @@ class AzureBatchExecutor(RemoteExecutor):
     async def _upload_task(self, function, args, kwargs, task_metadata):
         pass
 
-    async def submit_task(self, task_metadata, identity):
+    async def submit_task(self, task_metadata, credential):
         pass
 
     async def get_status(self, job_id):
         pass
 
-    async def _poll_task(self, job_id):
-        pass
+    async def _poll_task(self, job_id) -> batchmodels.TaskState:
+        """Poll task status until completion."""
+        self._debug_log(f"Polling task status with job id {job_id}...")
+        credential = self._validate_credentials()
+        batch_service_client = self._get_batch_service_client(credentials=credential)
+
+        tasks = batch_service_client.task.list(job_id)
+        self._debug_log(f"Tasks retrieved: {tasks}")
+
+        if tasks[0].state != batchmodels.TaskState.completed:
+            await asyncio.sleep(self.poll_freq)
+        else:
+            return tasks[0].state
+
+        # TODO: Add snippet to get exit code from task and return / log
 
     async def cancel(self, job_id, reason):
         pass
