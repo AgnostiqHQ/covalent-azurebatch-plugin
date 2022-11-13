@@ -20,9 +20,11 @@
 
 """Unit tests for the Azure Batch executor plugin."""
 
+from unittest.mock import MagicMock
+
 import pytest
 
-from covalent_azurebatch_plugin.azurebatch import _EXECUTOR_PLUGIN_DEFAULTS, AzureBatchExecutor
+from covalent_azurebatch_plugin.azurebatch import AzureBatchExecutor
 
 
 class TestAzureBatchExecutor:
@@ -78,3 +80,17 @@ class TestAzureBatchExecutor:
         batch_executor = AzureBatchExecutor(**mock_executor_config)
         for executor_attr in mock_executor_config:
             assert getattr(batch_executor, executor_attr) == mock_executor_config[executor_attr]
+
+    def test_get_blob_client(self, mock_executor, mocker):
+        """Test Azure Batch executor blob client getter."""
+        credentials_mock = MagicMock()
+        blob_service_client_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.BlobServiceClient.__init__", return_value=None
+        )
+        mock_executor._get_blob_client(credentials_mock)
+        account_uri_mock = (
+            f"https://{mock_executor.storage_account_name}.{mock_executor.storage_account_domain}/"
+        )
+        blob_service_client_mock.assert_called_once_with(
+            account_url=account_uri_mock, credentials=credentials_mock
+        )

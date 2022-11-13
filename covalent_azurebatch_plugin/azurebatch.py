@@ -22,7 +22,7 @@
 
 import asyncio
 import time
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Callable, Dict, List, Union
 
 from azure.batch import BatchServiceClient, models
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
@@ -109,15 +109,19 @@ class AzureBatchExecutor(RemoteExecutor):
         self._debug_log("Starting Azure Batch Executor with config:")
         self._debug_log(config)
 
-    def _get_blob_client(self, credentials) -> BlobServiceClient:
+    def _get_blob_client(
+        self, credentials: Union[bool, DefaultAzureCredential, ClientSecretCredential]
+    ) -> BlobServiceClient:
         """Get Azure Blob client."""
-        self._debug_log("Initializing blob client...")
+        self._debug_log("Initializing blob storage client...")
         return BlobServiceClient(
             account_url=f"https://{self.storage_account_name}.{self.storage_account_domain}/",
             credentials=credentials,
         )
 
-    def _get_batch_service_client(self, credentials) -> BatchServiceClient:
+    def _get_batch_service_client(
+        self, credentials: Union[bool, DefaultAzureCredential, ClientSecretCredential]
+    ) -> BatchServiceClient:
         """Get Azure Batch client."""
         self._debug_log("Initializing batch client...")
         return BatchServiceClient(credentials=credentials, batch_url=self.batch_account_url)
