@@ -24,8 +24,7 @@ import asyncio
 import time
 from typing import Callable, Dict, List, Tuple, Union
 
-from azure.batch import BatchServiceClient
-from azure.batch.models import batchmodels
+from azure.batch import BatchServiceClient, models
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 from covalent._shared_files.config import get_config
@@ -181,7 +180,7 @@ class AzureBatchExecutor(RemoteExecutor):
     async def get_status(self, job_id):
         pass
 
-    async def _poll_task(self, job_id) -> batchmodels.TaskState:
+    async def _poll_task(self, job_id) -> models.TaskState:
         """Poll task status until completion."""
         self._debug_log(f"Polling task status with job id {job_id}...")
         credential = self._validate_credentials()
@@ -190,7 +189,7 @@ class AzureBatchExecutor(RemoteExecutor):
         tasks = batch_service_client.task.list(job_id)
         self._debug_log(f"Tasks retrieved: {tasks}")
 
-        if tasks[0].state != batchmodels.TaskState.completed:
+        if tasks[0].state != models.TaskState.completed:
             await asyncio.sleep(self.poll_freq)
         else:
             return tasks[0].state
@@ -200,5 +199,5 @@ class AzureBatchExecutor(RemoteExecutor):
     async def cancel(self, job_id, reason):
         pass
 
-    async def _query_result(self, task_metadata):
+    async def query_result(self, task_metadata):
         pass

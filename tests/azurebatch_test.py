@@ -18,5 +18,63 @@
 #
 # Relief from the License may be granted by purchasing a commercial license.
 
-def test_validate_credentials():
-    pass
+"""Unit tests for the Azure Batch executor plugin."""
+
+import pytest
+
+from covalent_azurebatch_plugin.azurebatch import _EXECUTOR_PLUGIN_DEFAULTS, AzureBatchExecutor
+
+
+class TestAzureBatchExecutor:
+
+    MOCK_TENANT_ID = "mock-tenant-id"
+    MOCK_CLIENT_ID = "mock-client-id"
+    MOCK_CLIENT_SECRET = "mock-client-secret"
+    MOCK_BATCH_ACCOUNT_URL = "mock-batch-account-url"
+    MOCK_STORAGE_ACCOUNT_NAME = "mock-storage-account-name"
+    MOCK_STORAGE_ACCOUNT_DOMAIN = "mock-storage-account-domain"
+    MOCK_POOL_ID = "mock-pool-id"
+    MOCK_JOB_ID = "mock-job-id"
+    MOCK_RETRIES = 2
+    MOCK_TIME_LIMIT = 3
+    MOCK_CACHE_DIR = "/tmp/covalent"
+    MOCK_POLL_FREQ = 4
+
+    @pytest.fixture
+    def mock_executor_config(self):
+        """Mock executor config values."""
+        return {
+            "tenant_id": self.MOCK_TENANT_ID,
+            "client_id": self.MOCK_CLIENT_ID,
+            "client_secret": self.MOCK_CLIENT_SECRET,
+            "batch_account_url": self.MOCK_BATCH_ACCOUNT_URL,
+            "storage_account_name": self.MOCK_STORAGE_ACCOUNT_NAME,
+            "storage_account_domain": self.MOCK_STORAGE_ACCOUNT_DOMAIN,
+            "pool_id": self.MOCK_POOL_ID,
+            "job_id": self.MOCK_JOB_ID,
+            "retries": self.MOCK_RETRIES,
+            "time_limit": self.MOCK_TIME_LIMIT,
+            "cache_dir": self.MOCK_CACHE_DIR,
+            "poll_freq": self.MOCK_POLL_FREQ,
+        }
+
+    @pytest.fixture
+    def mock_executor(self, mock_executor_config):
+        """Mock Azure Batch executor fixture."""
+        return AzureBatchExecutor(**mock_executor_config)
+
+    def test_init_null_values(self, mock_executor_config, mocker):
+        """Test Azure Batch executor initialization with null values."""
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.get_config", return_value="MOCK_CONFIG"
+        )
+        batch_executor = AzureBatchExecutor()
+        for executor_attr in mock_executor_config:
+            assert getattr(batch_executor, executor_attr) == "MOCK_CONFIG"
+
+    def test_init_non_null_values(self, mock_executor_config, mocker):
+        """Test Azure Batch executor initialization with non-null values."""
+        mocker.patch("covalent_azurebatch_plugin.azurebatch.get_config", return_value=None)
+        batch_executor = AzureBatchExecutor(**mock_executor_config)
+        for executor_attr in mock_executor_config:
+            assert getattr(batch_executor, executor_attr) == mock_executor_config[executor_attr]
