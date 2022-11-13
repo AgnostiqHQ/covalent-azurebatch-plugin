@@ -94,3 +94,14 @@ class TestAzureBatchExecutor:
         blob_service_client_mock.assert_called_once_with(
             account_url=account_uri_mock, credentials=credentials_mock
         )
+
+    def test_get_batch_client(self, mock_executor, mocker):
+        """Test Azure Batch executor batch client getter."""
+        credentials_mock = MagicMock()
+        batch_service_client_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.BatchServiceClient.__init__", return_value=None
+        )
+        mock_executor._get_batch_service_client(credentials_mock)
+        batch_service_client_mock.assert_called_once_with(
+            credentials=credentials_mock, batch_url=mock_executor.batch_account_url
+        )
