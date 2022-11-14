@@ -20,7 +20,7 @@
 
 """Unit tests for the Azure Batch executor plugin."""
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from azure.batch import models
@@ -220,29 +220,53 @@ class TestAzureBatchExecutor:
     @pytest.mark.asyncio
     async def test_poll_task(self, mock_executor, mocker):
         """Test Azure Batch executor task polling."""
-
-        class MockState:
-            def __init__(self, state):
-                self.state = state
-
         asyncio_sleep_mock = mocker.patch("covalent_azurebatch_plugin.azurebatch.asyncio.sleep")
         mocker.patch(
             "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._validate_credentials"
         )
-        batch_client_mock = MagicMock()
-        mocker.patch(
-            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._get_batch_service_client",
-            return_value=batch_client_mock,
+        async_get_status_mock = AsyncMock(
+            side_effect=[
+                models.TaskState.preparing,
+                models.TaskState.running,
+                models.TaskState.completed,
+            ],
         )
-        batch_client_mock.task.list.side_effect = [
-            [MockState(models.TaskState.preparing)],
-            [MockState(models.TaskState.running)],
-            [MockState(models.TaskState.completed)],
-        ]
-        state = await mock_executor._poll_task(self.MOCK_JOB_ID)
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor.get_status",
+            side_effect=async_get_status_mock,
+        )
+
+        await mock_executor._poll_task(self.MOCK_JOB_ID)
         asyncio_sleep_mock.assert_has_calls(
             [mocker.call(self.MOCK_POLL_FREQ), mocker.call(self.MOCK_POLL_FREQ)]
         )
+
+    # @pytest.mark.asyncio
+    # async def test_poll_task(self, mock_executor, mocker):
+    #     """Test Azure Batch executor task polling."""
+
+    #     class MockState:
+    #         def __init__(self, state):
+    #             self.state = state
+
+    #     asyncio_sleep_mock = mocker.patch("covalent_azurebatch_plugin.azurebatch.asyncio.sleep")
+    #     mocker.patch(
+    #         "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._validate_credentials"
+    #     )
+    #     batch_client_mock = MagicMock()
+    #     mocker.patch(
+    #         "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._get_batch_service_client",
+    #         return_value=batch_client_mock,
+    #     )
+    #     batch_client_mock.task.list.side_effect = [
+    #         [MockState(models.TaskState.preparing)],
+    #         [MockState(models.TaskState.running)],
+    #         [MockState(models.TaskState.completed)],
+    #     ]
+    #     state = await mock_executor._poll_task(self.MOCK_JOB_ID)
+    #     asyncio_sleep_mock.assert_has_calls(
+    #         [mocker.call(self.MOCK_POLL_FREQ), mocker.call(self.MOCK_POLL_FREQ)]
+    #     )
 
     def test_debug_log(self, mock_executor, mocker):
         """Test Azure Batch executor debug logging."""
