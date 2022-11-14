@@ -181,22 +181,40 @@ class TestAzureBatchExecutor:
         mock_executor.tenant_id = tenant_id
         mock_executor.client_id = client_id
         mock_executor.client_secret = client_secret
-        client_secret_credential_mock = mocker.patch(
-            "covalent_azurebatch_plugin.azurebatch.ClientSecretCredential.__init__",
-            return_value=None,
+
+        secret_credential_mock = MagicMock()
+        default_credential_mock = MagicMock()
+
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.ClientSecretCredential",
+            return_value=secret_credential_mock,
         )
-        default_azure_credential_mock = mocker.patch(
-            "covalent_azurebatch_plugin.azurebatch.DefaultAzureCredential.__init__",
-            return_value=None,
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.DefaultAzureCredential",
+            return_value=default_credential_mock,
         )
+
+        credentials = mock_executor._validate_credentials()
         if tenant_id and client_id and client_secret:
-            mock_executor._validate_credentials()
-            client_secret_credential_mock.assert_called_once_with(
-                tenant_id, client_id, client_secret
-            )
+            assert credentials == secret_credential_mock
         else:
+            assert credentials == default_credential_mock
+
+    def test_validate_credentials_exception_raised(self, mock_executor, mocker):
+        """Test Azure Batch executor credential validation exception being raised."""
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.ClientSecretCredential", side_effect=Exception
+        )
+        with pytest.raises(Exception):
             mock_executor._validate_credentials()
-            default_azure_credential_mock.assert_called_once_with()
+
+    def test_validate_credentials_exception_not_raised(self, mock_executor, mocker):
+        """Test Azure Batch executor credential validation exception not being raised."""
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.ClientSecretCredential", side_effect=Exception
+        )
+        credentials = mock_executor._validate_credentials(raise_exception=False)
+        assert not credentials
 
     def test_poll_task(self, mock_executor, mocker):
         pass
