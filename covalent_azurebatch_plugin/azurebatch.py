@@ -21,8 +21,7 @@
 """Azure Batch executor for the Covalent Dispatcher."""
 
 import asyncio
-import time
-from typing import Callable, Dict, List, Union
+from typing import Any, Callable, Dict, List, Union
 
 from azure.batch import BatchServiceClient, models
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
@@ -167,7 +166,7 @@ class AzureBatchExecutor(RemoteExecutor):
         await self._upload_task(function, args, kwargs, task_metadata)
 
         self._debug_log("Submitting task to Batch service...")
-        job_id = await self._submit_task(task_metadata, credential)
+        job_id = await self.submit_task(task_metadata, credential)
 
         self._debug_log(f"Job id: {job_id}")
         await self._poll_task(job_id)
@@ -203,5 +202,5 @@ class AzureBatchExecutor(RemoteExecutor):
     async def cancel(self, job_id, reason):
         pass
 
-    async def query_result(self, task_metadata):
+    async def query_result(self, task_metadata) -> Any:
         pass

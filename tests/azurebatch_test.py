@@ -41,6 +41,8 @@ class TestAzureBatchExecutor:
     MOCK_TIME_LIMIT = 3
     MOCK_CACHE_DIR = "/tmp/covalent"
     MOCK_POLL_FREQ = 4
+    MOCK_DISPATCH_ID = "mock-dispatch-id"
+    MOCK_NODE_ID = 1
 
     @pytest.fixture
     def mock_executor_config(self):
@@ -59,6 +61,22 @@ class TestAzureBatchExecutor:
             "cache_dir": self.MOCK_CACHE_DIR,
             "poll_freq": self.MOCK_POLL_FREQ,
         }
+
+    @property
+    def MOCK_TASK_METADATA(self):
+        """Mock task metadata."""
+        return {
+            "dispatch_id": self.MOCK_DISPATCH_ID,
+            "node_id": self.MOCK_NODE_ID,
+        }
+
+    @property
+    def MOCK_ARGS(self):
+        return [1]
+
+    @property
+    def MOCK_KWARGS(self):
+        return {"y": 1}
 
     @pytest.fixture
     def mock_executor(self, mock_executor_config):
@@ -105,3 +123,45 @@ class TestAzureBatchExecutor:
         batch_service_client_mock.assert_called_once_with(
             credentials=credentials_mock, batch_url=mock_executor.batch_account_url
         )
+
+    @pytest.mark.asyncio
+    async def test_run(self, mock_executor, mocker):
+        """Test Azure Batch executor run method."""
+
+        def mock_func(x, y):
+            return x + y
+
+        credential_mock = MagicMock()
+        validate_credentials_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._validate_credentials",
+            return_value=credential_mock,
+        )
+        upload_task_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._upload_task"
+        )
+        submit_task_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor.submit_task",
+            return_value=self.MOCK_JOB_ID,
+        )
+        poll_task_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._poll_task"
+        )
+        query_result_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor.query_result",
+            return_value="MOCK_RESULT",
+        )
+
+        assert (
+            await mock_executor.run(
+                mock_func, self.MOCK_ARGS, self.MOCK_KWARGS, self.MOCK_TASK_METADATA
+            )
+            == "MOCK_RESULT"
+        )
+
+        validate_credentials_mock.assert_called_once_with()
+        upload_task_mock.assert_called_once_with(
+            mock_func, self.MOCK_ARGS, self.MOCK_KWARGS, self.MOCK_TASK_METADATA
+        )
+        submit_task_mock.assert_called_once_with(self.MOCK_TASK_METADATA, credential_mock)
+        poll_task_mock.assert_called_once_with(self.MOCK_JOB_ID)
+        query_result_mock.assert_called_once_with(self.MOCK_TASK_METADATA)
