@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Added
+
+- Implementation of run, validate_credential, debug_log and poll task methods.
+- Implementation of corresponding unit tests.
+
 ## [0.3.0] - 2022-11-08
 
 ### Fixed
