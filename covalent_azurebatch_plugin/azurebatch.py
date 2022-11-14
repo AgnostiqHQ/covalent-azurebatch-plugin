@@ -183,7 +183,7 @@ class AzureBatchExecutor(RemoteExecutor):
     async def get_status(self, job_id):
         pass
 
-    async def _poll_task(self, job_id) -> models.TaskState:
+    async def _poll_task(self, job_id) -> None:
         """Poll task status until completion."""
         self._debug_log(f"Polling task status with job id {job_id}...")
         credential = self._validate_credentials()
@@ -192,12 +192,11 @@ class AzureBatchExecutor(RemoteExecutor):
         tasks = batch_service_client.task.list(job_id)
         self._debug_log(f"Tasks retrieved: {tasks}")
 
-        if tasks[0].state != models.TaskState.completed:
+        while tasks[0].state != models.TaskState.completed:
             await asyncio.sleep(self.poll_freq)
-        else:
-            return tasks[0].state
+            tasks = batch_service_client.task.list(job_id)
 
-        # TODO: Add snippet to get exit code from task and return / log
+        # TODO: Add snippet to get exit code from task and raise exception/log.
 
     async def cancel(self, job_id, reason):
         pass

@@ -23,6 +23,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+from azure.batch import models
 
 from covalent_azurebatch_plugin.azurebatch import AzureBatchExecutor
 
@@ -40,7 +41,7 @@ class TestAzureBatchExecutor:
     MOCK_RETRIES = 2
     MOCK_TIME_LIMIT = 3
     MOCK_CACHE_DIR = "/tmp/covalent"
-    MOCK_POLL_FREQ = 4
+    MOCK_POLL_FREQ = 0.5
     MOCK_DISPATCH_ID = "mock-dispatch-id"
     MOCK_NODE_ID = 1
 
@@ -216,8 +217,35 @@ class TestAzureBatchExecutor:
         credentials = mock_executor._validate_credentials(raise_exception=False)
         assert not credentials
 
-    def test_poll_task(self, mock_executor, mocker):
-        pass
+    @pytest.mark.asyncio
+    async def test_poll_task(self, mock_executor, mocker):
+        """Test Azure Batch executor task polling."""
+
+        class MockState:
+            def __init__(self, state):
+                self.state = state
+
+        asyncio_sleep_mock = mocker.patch("covalent_azurebatch_plugin.azurebatch.asyncio.sleep")
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._validate_credentials"
+        )
+        batch_client_mock = MagicMock()
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._get_batch_service_client",
+            return_value=batch_client_mock,
+        )
+        batch_client_mock.task.list.side_effect = [
+            [MockState(models.TaskState.preparing)],
+            [MockState(models.TaskState.running)],
+            [MockState(models.TaskState.completed)],
+        ]
+        state = await mock_executor._poll_task(self.MOCK_JOB_ID)
+        asyncio_sleep_mock.assert_has_calls(
+            [mocker.call(self.MOCK_POLL_FREQ), mocker.call(self.MOCK_POLL_FREQ)]
+        )
 
     def test_debug_log(self, mock_executor, mocker):
-        pass
+        """Test Azure Batch executor debug logging."""
+        app_log_mock = mocker.patch("covalent_azurebatch_plugin.azurebatch.app_log")
+        mock_executor._debug_log("mock-message")
+        app_log_mock.debug.assert_called_once_with("Azure Batch Executor: mock-message")
