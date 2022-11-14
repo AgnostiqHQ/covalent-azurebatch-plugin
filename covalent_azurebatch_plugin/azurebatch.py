@@ -21,6 +21,7 @@
 """Azure Batch executor for the Covalent Dispatcher."""
 
 import asyncio
+from functools import partial
 from typing import Any, Callable, Dict, List, Union
 
 from azure.batch import BatchServiceClient, models
@@ -29,6 +30,9 @@ from azure.storage.blob import BlobServiceClient
 from covalent._shared_files.config import get_config
 from covalent._shared_files.logger import app_log
 from covalent.executor.executor_plugins.remote_executor import RemoteExecutor
+
+from .exceptions import NoBatchTasksException
+from .utils import _execute_partial_in_threadpool, _load_pickle_file
 
 _EXECUTOR_PLUGIN_DEFAULTS = {
     "tenant_id": "",
@@ -185,8 +189,15 @@ class AzureBatchExecutor(RemoteExecutor):
         self._debug_log(f"Getting status for job id: {job_id}")
         credential = self._validate_credentials()
         batch_client = self._get_batch_service_client(credential)
-        job = batch_client.task.list(job_id)
-        return job.state
+
+        partial_func = partial(batch_client.task.list, job_id)
+        tasks = await _execute_partial_in_threadpool(partial_func)
+
+        self._debug_log(f"Batch tasks list: {tasks}")
+        if len(tasks) == 0:
+            raise NoBatchTasksException
+
+        return tasks[0].state
 
     async def _poll_task(self, job_id: str) -> None:
         """Poll task status until completion."""

@@ -241,6 +241,11 @@ class TestAzureBatchExecutor:
             [mocker.call(self.MOCK_POLL_FREQ), mocker.call(self.MOCK_POLL_FREQ)]
         )
 
+    @pytest.mark.asyncio
+    async def test_get_status(self, mock_executor, mocker):
+        """Test Azure Batch executor get status method."""
+        pass
+
     # @pytest.mark.asyncio
     # async def test_poll_task(self, mock_executor, mocker):
     #     """Test Azure Batch executor task polling."""
