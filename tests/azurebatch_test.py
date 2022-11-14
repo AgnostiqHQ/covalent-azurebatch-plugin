@@ -165,3 +165,41 @@ class TestAzureBatchExecutor:
         submit_task_mock.assert_called_once_with(self.MOCK_TASK_METADATA, credential_mock)
         poll_task_mock.assert_called_once_with(self.MOCK_JOB_ID)
         query_result_mock.assert_called_once_with(self.MOCK_TASK_METADATA)
+
+    @pytest.mark.parametrize(
+        "tenant_id,client_id,client_secret",
+        [
+            (None, None, None),
+            ("mock-tenant-id", "mock-client-id", None),
+            ("mock-tenant-id", "mock-client-id", "mock-cllient-secret"),
+        ],
+    )
+    def test_validate_credentials(
+        self, mock_executor, mocker, tenant_id, client_id, client_secret
+    ):
+        """Test Azure Batch executor credential validation."""
+        mock_executor.tenant_id = tenant_id
+        mock_executor.client_id = client_id
+        mock_executor.client_secret = client_secret
+        client_secret_credential_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.ClientSecretCredential.__init__",
+            return_value=None,
+        )
+        default_azure_credential_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.DefaultAzureCredential.__init__",
+            return_value=None,
+        )
+        if tenant_id and client_id and client_secret:
+            mock_executor._validate_credentials()
+            client_secret_credential_mock.assert_called_once_with(
+                tenant_id, client_id, client_secret
+            )
+        else:
+            mock_executor._validate_credentials()
+            default_azure_credential_mock.assert_called_once_with()
+
+    def test_poll_task(self, mock_executor, mocker):
+        pass
+
+    def test_debug_log(self, mock_executor, mocker):
+        pass
