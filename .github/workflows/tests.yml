@@ -104,6 +104,7 @@ jobs:
         with:
           files: ./coverage.xml
           name: "Plugin Unit Tests"
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Get latest release
         uses: actions-ecosystem/action-get-latest-tag@v1
