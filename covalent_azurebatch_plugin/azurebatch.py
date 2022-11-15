@@ -22,7 +22,7 @@
 
 import asyncio
 from functools import partial
-from typing import Any, Callable, Dict, List, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 from azure.batch import BatchServiceClient, models
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
@@ -31,7 +31,7 @@ from covalent._shared_files.config import get_config
 from covalent._shared_files.logger import app_log
 from covalent.executor.executor_plugins.remote_executor import RemoteExecutor
 
-from .exceptions import NoBatchTasksException
+from .exceptions import BatchTaskFailedException, NoBatchTasksException
 from .utils import _execute_partial_in_threadpool, _load_pickle_file
 
 _EXECUTOR_PLUGIN_DEFAULTS = {
@@ -184,7 +184,7 @@ class AzureBatchExecutor(RemoteExecutor):
     async def submit_task(self, task_metadata, credential):
         pass
 
-    async def get_status(self, job_id: str) -> models.TaskState:
+    async def get_status(self, job_id: str) -> Tuple[models.TaskState, int]:
         """Get the status of a batch task."""
         self._debug_log(f"Getting status for job id: {job_id}")
         credential = self._validate_credentials()
@@ -197,9 +197,15 @@ class AzureBatchExecutor(RemoteExecutor):
         if len(tasks) == 0:
             raise NoBatchTasksException
 
-        # TODO: Add snippet to get exit code from task and raise exception/log.
+        partial_func = partial(batch_client.task.get, job_id, tasks[0].id)
+        cloud_task = await _execute_partial_in_threadpool(partial_func)
 
-        return tasks[0].state
+        self._debug_log(f"Cloud task execution info: {cloud_task.execution_info}")
+        exit_code = cloud_task.execution_info.exit_code
+        if exit_code != 0:
+            raise BatchTaskFailedException(exit_code)
+
+        return tasks[0].state, exit_code
 
     async def _poll_task(self, job_id: str) -> None:
         """Poll task status until completion."""

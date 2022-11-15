@@ -282,3 +282,13 @@ class TestAzureBatchExecutor:
         app_log_mock = mocker.patch("covalent_azurebatch_plugin.azurebatch.app_log")
         mock_executor._debug_log("mock-message")
         app_log_mock.debug.assert_called_once_with("Azure Batch Executor: mock-message")
+
+    @pytest.mark.asyncio
+    def test_upload_task(self, mock_executor, mocker):
+        """Test Azure Batch executor upload task method."""
+        pass
+
+    @pytest.mark.asyncio
+    def test_query_result(self, mock_executor, mocker):
+        """Test Azure Batch executor query result method."""
+        pass
