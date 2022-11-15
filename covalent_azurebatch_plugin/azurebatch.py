@@ -21,9 +21,11 @@
 """Azure Batch executor for the Covalent Dispatcher."""
 
 import asyncio
+import tempfile
 from functools import partial
 from typing import Any, Callable, Dict, List, Tuple, Union
 
+import cloudpickle as pickle
 from azure.batch import BatchServiceClient, models
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
@@ -112,7 +114,7 @@ class AzureBatchExecutor(RemoteExecutor):
         self._debug_log("Starting Azure Batch Executor with config:")
         self._debug_log(config)
 
-    def _get_blob_client(
+    def _get_blob_service_client(
         self, credentials: Union[bool, DefaultAzureCredential, ClientSecretCredential]
     ) -> BlobServiceClient:
         """Get Azure Blob client."""
@@ -178,8 +180,45 @@ class AzureBatchExecutor(RemoteExecutor):
         self._debug_log("Querying result...")
         return await self.query_result(task_metadata)
 
-    async def _upload_task(self, function, args, kwargs, task_metadata):
-        pass
+    def _upload_task_to_blob(
+        self,
+        dispatch_id: str,
+        node_id: str,
+        function: Callable,
+        args: List,
+        kwargs: Dict,
+        container_name: str,
+    ) -> None:
+        """Upload task to Azure blob storage."""
+        self._debug_log("Uploading task to Azure blob storage...")
+        blob_service_client = self._get_blob_service_client(self._validate_credentials())
+
+        with tempfile.NamedTemporaryFile(dir=self.cache_dir) as function_file:
+            pickle.dump((function, args, kwargs), function_file)
+            function_file.flush()
+            blob_obj_filename = FUNC_FILENAME.format(dispatch_id=dispatch_id, node_id=node_id)
+            blob_client = blob_service_client.get_blob_client(
+                container=container_name, blob=blob_obj_filename
+            )
+
+            with open(file=function_file, mode="rb") as data:
+                blob_client.upload_blob(data)
+
+    async def _upload_task(
+        self, function: Callable, args: List, kwargs: Dict, task_metadata: Dict
+    ) -> None:
+        """Async wrapper for task upload."""
+        self._debug_log("Async wrapper for task upload to Azure blob...")
+
+        dispatch_id = task_metadata["dispatch_id"]
+        node_id = task_metadata["node_id"]
+        container_name = task_metadata["container_name"]
+        self._debug_log(f"Task metadata {task_metadata}.")
+
+        partial_func = partial(
+            self._upload_task_to_blob, dispatch_id, node_id, function, args, kwargs, container_name
+        )
+        await _execute_partial_in_threadpool(partial_func)
 
     async def submit_task(self, task_metadata, credential):
         pass

@@ -107,7 +107,7 @@ class TestAzureBatchExecutor:
         blob_service_client_mock = mocker.patch(
             "covalent_azurebatch_plugin.azurebatch.BlobServiceClient.__init__", return_value=None
         )
-        mock_executor._get_blob_client(credentials_mock)
+        mock_executor._get_blob_service_client(credentials_mock)
         account_uri_mock = (
             f"https://{mock_executor.storage_account_name}.{mock_executor.storage_account_domain}/"
         )
