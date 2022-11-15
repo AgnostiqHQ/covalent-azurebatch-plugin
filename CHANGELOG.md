@@ -9,7 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added 
 
-- 
+- Implementation of upload_task, get_status and query_result methods.
+- Unit tests for the corresponding methods above.
+- Codecov token in tests.yml. Needs to be taken out before this repo becomes public. 
+
 ## [0.4.0] - 2022-11-14
 
 ### Added

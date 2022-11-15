@@ -45,6 +45,7 @@ class TestAzureBatchExecutor:
     MOCK_POLL_FREQ = 0.5
     MOCK_DISPATCH_ID = "mock-dispatch-id"
     MOCK_NODE_ID = 1
+    MOCK_CONTAINER_NAME = "mock-container"
 
     @pytest.fixture
     def mock_executor_config(self):
@@ -70,6 +71,7 @@ class TestAzureBatchExecutor:
         return {
             "dispatch_id": self.MOCK_DISPATCH_ID,
             "node_id": self.MOCK_NODE_ID,
+            "container_name": self.MOCK_CONTAINER_NAME,
         }
 
     @property
@@ -324,10 +326,31 @@ class TestAzureBatchExecutor:
         mock_executor._debug_log("mock-message")
         app_log_mock.debug.assert_called_once_with("Azure Batch Executor: mock-message")
 
+    def test_upload_task_to_blob(self, mock_executor, mocker):
+        """Test Azure Batch executor upload task to blob."""
+        pass
+
     @pytest.mark.asyncio
     async def test_upload_task(self, mock_executor, mocker):
         """Test Azure Batch executor upload task method."""
-        pass
+
+        def mock_func(x, y):
+            return x + y
+
+        upload_task_to_blob_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._upload_task_to_blob"
+        )
+        await mock_executor._upload_task(
+            mock_func, self.MOCK_ARGS, self.MOCK_KWARGS, self.MOCK_TASK_METADATA
+        )
+        upload_task_to_blob_mock.assert_called_once_with(
+            self.MOCK_DISPATCH_ID,
+            self.MOCK_NODE_ID,
+            mock_func,
+            self.MOCK_ARGS,
+            self.MOCK_KWARGS,
+            self.MOCK_CONTAINER_NAME,
+        )
 
     @pytest.mark.asyncio
     async def test_query_result(self, mock_executor, mocker):
