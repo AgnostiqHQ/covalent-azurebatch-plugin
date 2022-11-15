@@ -197,6 +197,8 @@ class AzureBatchExecutor(RemoteExecutor):
         if len(tasks) == 0:
             raise NoBatchTasksException
 
+        # TODO: Add snippet to get exit code from task and raise exception/log.
+
         return tasks[0].state
 
     async def _poll_task(self, job_id: str) -> None:
@@ -207,8 +209,6 @@ class AzureBatchExecutor(RemoteExecutor):
         while status != models.TaskState.completed:
             await asyncio.sleep(self.poll_freq)
             status = await self.get_status(job_id)
-
-        # TODO: Add snippet to get exit code from task and raise exception/log.
 
     async def cancel(self, job_id, reason):
         pass
