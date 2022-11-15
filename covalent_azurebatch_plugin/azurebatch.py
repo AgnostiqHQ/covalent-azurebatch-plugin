@@ -201,7 +201,7 @@ class AzureBatchExecutor(RemoteExecutor):
                 container=container_name, blob=blob_obj_filename
             )
 
-            with open(file=function_file, mode="rb") as data:
+            with open(file=function_file.name, mode="rb") as data:
                 blob_client.upload_blob(data)
 
     async def _upload_task(

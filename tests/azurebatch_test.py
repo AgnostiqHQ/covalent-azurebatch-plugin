@@ -25,7 +25,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from azure.batch import models
 
-from covalent_azurebatch_plugin.azurebatch import AzureBatchExecutor
+from covalent_azurebatch_plugin.azurebatch import FUNC_FILENAME, AzureBatchExecutor
 from covalent_azurebatch_plugin.exceptions import BatchTaskFailedException, NoBatchTasksException
 
 
@@ -41,7 +41,7 @@ class TestAzureBatchExecutor:
     MOCK_JOB_ID = "mock-job-id"
     MOCK_RETRIES = 2
     MOCK_TIME_LIMIT = 3
-    MOCK_CACHE_DIR = "/tmp/covalent"
+    MOCK_CACHE_DIR = "/tmp/"
     MOCK_POLL_FREQ = 0.5
     MOCK_DISPATCH_ID = "mock-dispatch-id"
     MOCK_NODE_ID = 1
@@ -81,6 +81,10 @@ class TestAzureBatchExecutor:
     @property
     def MOCK_KWARGS(self):
         return {"y": 1}
+
+    @property
+    def MOCK_FUNC_FILENAME(self):
+        return FUNC_FILENAME.format(dispatch_id=self.MOCK_DISPATCH_ID, node_id=self.MOCK_NODE_ID)
 
     @pytest.fixture
     def mock_executor(self, mock_executor_config):
@@ -328,7 +332,28 @@ class TestAzureBatchExecutor:
 
     def test_upload_task_to_blob(self, mock_executor, mocker):
         """Test Azure Batch executor upload task to blob."""
-        pass
+
+        def mock_func(x, y):
+            return x + y
+
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._validate_credentials"
+        )
+        blob_service_client_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._get_blob_service_client"
+        )
+
+        mock_executor._upload_task_to_blob(
+            self.MOCK_DISPATCH_ID,
+            self.MOCK_NODE_ID,
+            mock_func,
+            self.MOCK_ARGS,
+            self.MOCK_KWARGS,
+            self.MOCK_CONTAINER_NAME,
+        )
+        blob_service_client_mock().get_blob_client.assert_called_once_with(
+            container=self.MOCK_CONTAINER_NAME, blob=self.MOCK_FUNC_FILENAME
+        )
 
     @pytest.mark.asyncio
     async def test_upload_task(self, mock_executor, mocker):
