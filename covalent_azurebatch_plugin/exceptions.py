@@ -32,4 +32,4 @@ class BatchTaskFailedException(Exception):
 
     def __init__(self, exit_code):
         msg = f"Task failed with exit code {exit_code}"
-        super.__init__(msg)
+        super().__init__(msg)

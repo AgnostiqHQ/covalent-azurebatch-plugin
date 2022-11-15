@@ -26,7 +26,7 @@ import pytest
 from azure.batch import models
 
 from covalent_azurebatch_plugin.azurebatch import AzureBatchExecutor
-from covalent_azurebatch_plugin.exceptions import NoBatchTasksException
+from covalent_azurebatch_plugin.exceptions import BatchTaskFailedException, NoBatchTasksException
 
 
 class TestAzureBatchExecutor:
@@ -246,9 +246,15 @@ class TestAzureBatchExecutor:
     async def test_get_status(self, mock_executor, mocker):
         """Test Azure Batch executor get status method."""
 
+        class MockExecutionInfo:
+            def __init__(self, exit_code=0):
+                self.exit_code = exit_code
+
         class MockTask:
-            def __init__(self, state) -> None:
+            def __init__(self, state, task_id, execution_info=MockExecutionInfo()) -> None:
                 self.state = state
+                self.id = task_id
+                self.execution_info = execution_info
 
         mocker.patch(
             "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._validate_credentials"
@@ -258,12 +264,47 @@ class TestAzureBatchExecutor:
             "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._get_batch_service_client",
             return_value=batch_service_client_mock,
         )
-        batch_service_client_mock.task.list.return_value = [MockTask(models.TaskState.completed)]
-        state = await mock_executor.get_status(self.MOCK_JOB_ID)
+        batch_service_client_mock.task.list.return_value = [
+            MockTask(models.TaskState.completed, 1)
+        ]
+        batch_service_client_mock.task.get.return_value = MockTask(models.TaskState.completed, 1)
+        state, exit_code = await mock_executor.get_status(self.MOCK_JOB_ID)
         assert state == models.TaskState.completed
+        assert exit_code == 0
 
     @pytest.mark.asyncio
-    async def test_get_status_exception(self, mock_executor, mocker):
+    async def test_get_status_exit_code_exception(self, mock_executor, mocker):
+        """Test Azure Batch executor get status method exception being raised when exit code is non-zero."""
+
+        class MockExecutionInfo:
+            def __init__(self, exit_code=0):
+                self.exit_code = exit_code
+
+        class MockTask:
+            def __init__(self, state, task_id, execution_info=MockExecutionInfo()) -> None:
+                self.state = state
+                self.id = task_id
+                self.execution_info = execution_info
+
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._validate_credentials"
+        )
+        batch_service_client_mock = MagicMock()
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._get_batch_service_client",
+            return_value=batch_service_client_mock,
+        )
+        batch_service_client_mock.task.list.return_value = [
+            MockTask(models.TaskState.completed, 1)
+        ]
+        batch_service_client_mock.task.get.return_value = MockTask(
+            models.TaskState.completed, 1, MockExecutionInfo(-1)
+        )
+        with pytest.raises(BatchTaskFailedException):
+            await mock_executor.get_status(self.MOCK_JOB_ID)
+
+    @pytest.mark.asyncio
+    async def test_get_status_no_task_exception(self, mock_executor, mocker):
         """Test Azure Batch executor get status method exception."""
         mocker.patch(
             "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._validate_credentials"
@@ -284,11 +325,11 @@ class TestAzureBatchExecutor:
         app_log_mock.debug.assert_called_once_with("Azure Batch Executor: mock-message")
 
     @pytest.mark.asyncio
-    def test_upload_task(self, mock_executor, mocker):
+    async def test_upload_task(self, mock_executor, mocker):
         """Test Azure Batch executor upload task method."""
         pass
 
     @pytest.mark.asyncio
-    def test_query_result(self, mock_executor, mocker):
+    async def test_query_result(self, mock_executor, mocker):
         """Test Azure Batch executor query result method."""
         pass
