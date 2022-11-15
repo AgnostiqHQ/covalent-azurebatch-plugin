@@ -70,7 +70,9 @@ print(f"Executing {func_filename}... ")
 result = function(*args, **kwargs)
 
 # Upload result
-print(f"Uploading {local_result_filename}... ")
 with open(local_result_filename, "wb") as f:
     pickle.dump(result, f)
+
+print(f"Uploading {local_result_filename}... ")
+with open(local_result_filename, "rb") as f:
     container_client.upload_blob(result_filename,f)

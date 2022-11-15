@@ -26,7 +26,11 @@ WORKDIR /covalent
 
 RUN apt-get update && apt-get install -y \
   && rm -rf /var/lib/apt/lists/* \
-  && pip install -r requirements.txt
+  && pip install --no-cache-dir --use-feature=in-tree-build --upgrade \
+  azure-batch==12.0.0 \
+  azure-identity==1.11.0 \
+  azure-storage-blob==12.14.1 \
+  "covalent>=0.202.0,<1"
 
 COPY covalent_azurebatch_plugin/exec.py /covalent
 
