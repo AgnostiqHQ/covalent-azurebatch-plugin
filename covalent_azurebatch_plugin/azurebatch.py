@@ -281,8 +281,12 @@ class AzureBatchExecutor(RemoteExecutor):
         container_name = CONTAINER_NAME.format(dispatch_id=dispatch_id, node_id=node_id)
         blob_client = blob_service_client.get_blob_client(container=container_name)
 
+        self._debug_log(
+            f"Downloading result object from blob to local file {local_result_filename}..."
+        )
         partial_func = partial(blob_client.download_blob, result_filename)
         await _execute_partial_in_threadpool(partial_func)
 
+        self._debug_log(f"Loading result object from local file {local_result_filename}...")
         partial_func = partial(_load_pickle_file, local_result_filename)
         return await _execute_partial_in_threadpool(partial_func)
