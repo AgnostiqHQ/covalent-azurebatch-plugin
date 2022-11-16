@@ -41,7 +41,7 @@ class TestAzureBatchExecutor:
     MOCK_JOB_ID = "mock-job-id"
     MOCK_RETRIES = 2
     MOCK_TIME_LIMIT = 3
-    MOCK_CACHE_DIR = "/tmp/"
+    MOCK_CACHE_DIR = "/tmp/covalent"
     MOCK_POLL_FREQ = 0.5
     MOCK_DISPATCH_ID = "mock-dispatch-id"
     MOCK_NODE_ID = 1

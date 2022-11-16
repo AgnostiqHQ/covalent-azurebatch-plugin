@@ -21,8 +21,10 @@
 """Azure Batch executor for the Covalent Dispatcher."""
 
 import asyncio
+import os
 import tempfile
 from functools import partial
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Tuple, Union
 
 import cloudpickle as pickle
@@ -96,6 +98,8 @@ class AzureBatchExecutor(RemoteExecutor):
         self.time_limit = time_limit or get_config("executors.azurebatch.time_limit")
         self.cache_dir = cache_dir or get_config("executors.azurebatch.cache_dir")
         self.poll_freq = poll_freq or get_config("executors.azurebatch.poll_freq")
+
+        Path(self.cache_dir).mkdir(parents=True, exist_ok=True)
 
         config = {
             "tenant_id": self.tenant_id,
@@ -258,5 +262,28 @@ class AzureBatchExecutor(RemoteExecutor):
     async def cancel(self, job_id, reason):
         pass
 
+    # async def download_result_from_blob(self, ):
+
     async def query_result(self, task_metadata) -> Any:
-        pass
+        """Query result once task has completed."""
+        self._debug_log("Querying result...")
+        dispatch_id = task_metadata["dispatch_id"]
+        node_id = task_metadata["node_id"]
+        result_filename = RESULT_FILENAME.format(dispatch_id=dispatch_id, node_id=node_id)
+        local_result_filename = os.path.join(self.cache_dir, result_filename)
+
+        self._debug_log(
+            f"Downloading result from Azure blob storage to {local_result_filename}..."
+        )
+
+        credential = self._validate_credentials()
+        blob_service_client = self._get_blob_service_client(credential)
+
+        container_name = task_metadata["container_name"]
+        blob_client = blob_service_client.get_blob_client(container=container_name)
+
+        partial_func = partial(blob_client.download_blob, result_filename)
+        await _execute_partial_in_threadpool(partial_func)
+
+        partial_func = partial(_load_pickle_file, local_result_filename)
+        return await _execute_partial_in_threadpool(partial_func)
