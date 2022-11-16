@@ -18,9 +18,21 @@
 #
 # Relief from the License may be granted by purchasing a commercial license.
 
-azure-batch==12.0.0
-# Include any dependencies for the plugin in this file.
+ARG COVALENT_BASE_IMAGE
+FROM ${COVALENT_BASE_IMAGE}
 
-azure-identity==1.11.0
-azure-storage-blob==12.14.1
-covalent>=0.202.0,<1
+COPY requirements.txt /covalent/requirements.txt
+WORKDIR /covalent
+
+RUN apt-get update && apt-get install -y \
+  && rm -rf /var/lib/apt/lists/* \
+  && pip install --no-cache-dir --use-feature=in-tree-build --upgrade \
+  azure-batch==12.0.0 \
+  azure-identity==1.11.0 \
+  azure-storage-blob==12.14.1 \
+  "covalent>=0.202.0,<1"
+
+COPY covalent_azurebatch_plugin/exec.py /covalent
+
+ENTRYPOINT [ "python" ]
+CMD [ "/covalent/exec.py" ]
