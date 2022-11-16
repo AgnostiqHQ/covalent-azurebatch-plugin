@@ -43,7 +43,7 @@ _EXECUTOR_PLUGIN_DEFAULTS = {
     "client_id": "",
     "client_secret": "",
     "batch_account_url": "",
-    "storage_account_name": "",
+    "storage_account_name": "covalentbatch",  # TODO - Change default to empty string after
     "storage_account_domain": "blob.core.windows.net",
     "pool_id": "",
     "job_id": "",
@@ -57,6 +57,7 @@ EXECUTOR_PLUGIN_NAME = "AzureBatchExecutor"
 
 FUNC_FILENAME = "func-{dispatch_id}-{node_id}.pkl"
 RESULT_FILENAME = "result-{dispatch_id}-{node_id}.pkl"
+CONTAINER_NAME = "covalent-pickles"  # TODO - Change to dispatch / node id dependent name after
 JOB_NAME = "covalent-batch-{dispatch_id}-{node_id}"
 COVALENT_EXEC_BASE_URI = ""
 
@@ -216,7 +217,7 @@ class AzureBatchExecutor(RemoteExecutor):
 
         dispatch_id = task_metadata["dispatch_id"]
         node_id = task_metadata["node_id"]
-        container_name = task_metadata["container_name"]
+        container_name = CONTAINER_NAME.format(dispatch_id=dispatch_id, node_id=node_id)
         self._debug_log(f"Task metadata {task_metadata}.")
 
         partial_func = partial(
@@ -262,8 +263,6 @@ class AzureBatchExecutor(RemoteExecutor):
     async def cancel(self, job_id, reason):
         pass
 
-    # async def download_result_from_blob(self, ):
-
     async def query_result(self, task_metadata) -> Any:
         """Query result once task has completed."""
         self._debug_log("Querying result...")
@@ -279,7 +278,7 @@ class AzureBatchExecutor(RemoteExecutor):
         credential = self._validate_credentials()
         blob_service_client = self._get_blob_service_client(credential)
 
-        container_name = task_metadata["container_name"]
+        container_name = CONTAINER_NAME.format(dispatch_id=dispatch_id, node_id=node_id)
         blob_client = blob_service_client.get_blob_client(container=container_name)
 
         partial_func = partial(blob_client.download_blob, result_filename)
