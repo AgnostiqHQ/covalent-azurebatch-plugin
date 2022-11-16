@@ -57,7 +57,9 @@ EXECUTOR_PLUGIN_NAME = "AzureBatchExecutor"
 
 FUNC_FILENAME = "func-{dispatch_id}-{node_id}.pkl"
 RESULT_FILENAME = "result-{dispatch_id}-{node_id}.pkl"
-CONTAINER_NAME = "covalent-pickles"  # TODO - Change to dispatch / node id dependent name after
+STORAGE_CONTAINER_NAME = (
+    "covalent-pickles"  # TODO - Change to dispatch / node id dependent name after
+)
 JOB_NAME = "covalent-batch-{dispatch_id}-{node_id}"
 COVALENT_EXEC_BASE_URI = ""
 
@@ -217,7 +219,7 @@ class AzureBatchExecutor(RemoteExecutor):
 
         dispatch_id = task_metadata["dispatch_id"]
         node_id = task_metadata["node_id"]
-        container_name = CONTAINER_NAME.format(dispatch_id=dispatch_id, node_id=node_id)
+        container_name = STORAGE_CONTAINER_NAME.format(dispatch_id=dispatch_id, node_id=node_id)
         self._debug_log(f"Task metadata {task_metadata}.")
 
         partial_func = partial(
@@ -278,7 +280,7 @@ class AzureBatchExecutor(RemoteExecutor):
         credential = self._validate_credentials()
         blob_service_client = self._get_blob_service_client(credential)
 
-        container_name = CONTAINER_NAME.format(dispatch_id=dispatch_id, node_id=node_id)
+        container_name = STORAGE_CONTAINER_NAME.format(dispatch_id=dispatch_id, node_id=node_id)
         blob_client = blob_service_client.get_blob_client(container=container_name)
 
         self._debug_log(

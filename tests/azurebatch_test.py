@@ -27,9 +27,9 @@ import pytest
 from azure.batch import models
 
 from covalent_azurebatch_plugin.azurebatch import (
-    CONTAINER_NAME,
     FUNC_FILENAME,
     RESULT_FILENAME,
+    STORAGE_CONTAINER_NAME,
     AzureBatchExecutor,
 )
 from covalent_azurebatch_plugin.exceptions import BatchTaskFailedException, NoBatchTasksException
@@ -51,7 +51,7 @@ class TestAzureBatchExecutor:
     MOCK_POLL_FREQ = 0.5
     MOCK_DISPATCH_ID = "mock-dispatch-id"
     MOCK_NODE_ID = 1
-    MOCK_CONTAINER_NAME = CONTAINER_NAME
+    MOCK_CONTAINER_NAME = STORAGE_CONTAINER_NAME
 
     @pytest.fixture
     def mock_executor_config(self):
