@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unit tests for the corresponding methods above.
 - Codecov token in tests.yml. Needs to be taken out before this repo becomes public. 
 
+## [0.5.0] - 2022-11-16
+
+### Added
+
+- Added base executor Dockerfile 
+
 ## [0.4.0] - 2022-11-14
 
 ### Added
