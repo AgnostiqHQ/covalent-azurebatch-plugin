@@ -200,7 +200,7 @@ class AzureBatchExecutor(RemoteExecutor):
         self._debug_log("Uploading task to Azure blob storage...")
         blob_service_client = self._get_blob_service_client(self._validate_credentials())
 
-        with tempfile.NamedTemporaryFile(dir=self.cache_dir) as function_file:
+        with tempfile.NamedTemporaryFile(dir="/tmp") as function_file:
             pickle.dump((function, args, kwargs), function_file)
             function_file.flush()
             blob_obj_filename = FUNC_FILENAME.format(dispatch_id=dispatch_id, node_id=node_id)
@@ -271,7 +271,7 @@ class AzureBatchExecutor(RemoteExecutor):
         dispatch_id = task_metadata["dispatch_id"]
         node_id = task_metadata["node_id"]
         result_filename = RESULT_FILENAME.format(dispatch_id=dispatch_id, node_id=node_id)
-        local_result_filename = os.path.join(self.cache_dir, result_filename)
+        local_result_filename = os.path.join("/tmp", result_filename)
 
         self._debug_log(
             f"Downloading result from Azure blob storage to {local_result_filename}..."

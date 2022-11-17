@@ -407,3 +407,13 @@ class TestAzureBatchExecutor:
         load_pickle_file_mock.assert_called_with(
             os.path.join(self.MOCK_CACHE_DIR, self.MOCK_RESULT_FILENAME)
         )
+
+    @pytest.mark.asyncio
+    async def test_cancel(self, mock_executor, mocker):
+        """Test Azure Batch executor cancel method."""
+        pass
+
+    @pytest.mark.asyncio
+    async def test_submit_task(self, mock_executor, mocker):
+        """Test Azure Batch executor submit task method."""
+        pass
