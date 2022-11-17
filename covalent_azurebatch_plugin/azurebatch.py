@@ -122,21 +122,21 @@ class AzureBatchExecutor(RemoteExecutor):
         self._debug_log(config)
 
     def _get_blob_service_client(
-        self, credentials: Union[bool, DefaultAzureCredential, ClientSecretCredential]
+        self, credential: Union[bool, DefaultAzureCredential, ClientSecretCredential]
     ) -> BlobServiceClient:
         """Get Azure Blob client."""
         self._debug_log("Initializing blob storage client...")
         return BlobServiceClient(
             account_url=f"https://{self.storage_account_name}.{self.storage_account_domain}/",
-            credentials=credentials,
+            credential=credential,
         )
 
     def _get_batch_service_client(
-        self, credentials: Union[bool, DefaultAzureCredential, ClientSecretCredential]
+        self, credential: Union[bool, DefaultAzureCredential, ClientSecretCredential]
     ) -> BatchServiceClient:
         """Get Azure Batch client."""
         self._debug_log("Initializing batch client...")
-        return BatchServiceClient(credentials=credentials, batch_url=self.batch_account_url)
+        return BatchServiceClient(credential=credential, batch_url=self.batch_account_url)
 
     def _validate_credentials(
         self, raise_exception: bool = True

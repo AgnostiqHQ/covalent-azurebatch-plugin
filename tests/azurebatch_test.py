@@ -120,27 +120,27 @@ class TestAzureBatchExecutor:
 
     def test_get_blob_client(self, mock_executor, mocker):
         """Test Azure Batch executor blob client getter."""
-        credentials_mock = MagicMock()
+        credential_mock = MagicMock()
         blob_service_client_mock = mocker.patch(
             "covalent_azurebatch_plugin.azurebatch.BlobServiceClient.__init__", return_value=None
         )
-        mock_executor._get_blob_service_client(credentials_mock)
+        mock_executor._get_blob_service_client(credential_mock)
         account_uri_mock = (
             f"https://{mock_executor.storage_account_name}.{mock_executor.storage_account_domain}/"
         )
         blob_service_client_mock.assert_called_once_with(
-            account_url=account_uri_mock, credentials=credentials_mock
+            account_url=account_uri_mock, credential=credential_mock
         )
 
     def test_get_batch_client(self, mock_executor, mocker):
         """Test Azure Batch executor batch client getter."""
-        credentials_mock = MagicMock()
+        credential_mock = MagicMock()
         batch_service_client_mock = mocker.patch(
             "covalent_azurebatch_plugin.azurebatch.BatchServiceClient.__init__", return_value=None
         )
-        mock_executor._get_batch_service_client(credentials_mock)
+        mock_executor._get_batch_service_client(credential_mock)
         batch_service_client_mock.assert_called_once_with(
-            credentials=credentials_mock, batch_url=mock_executor.batch_account_url
+            credential=credential_mock, batch_url=mock_executor.batch_account_url
         )
 
     @pytest.mark.asyncio
@@ -232,8 +232,8 @@ class TestAzureBatchExecutor:
         mocker.patch(
             "covalent_azurebatch_plugin.azurebatch.ClientSecretCredential", side_effect=Exception
         )
-        credentials = mock_executor._validate_credentials(raise_exception=False)
-        assert not credentials
+        credential = mock_executor._validate_credentials(raise_exception=False)
+        assert not credential
 
     @pytest.mark.asyncio
     async def test_poll_task(self, mock_executor, mocker):

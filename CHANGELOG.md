@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Fixed 
+
+- Changed client arguments from `credentials` to `credential`.
+
+### Added 
+
+- Implementation of submit_task and cancel methods.
+- Unit tests for the corresponding methods.
+
 ## [0.6.0] - 2022-11-17
 
 ### Added 
