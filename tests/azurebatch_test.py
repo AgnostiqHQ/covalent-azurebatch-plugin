@@ -21,12 +21,19 @@
 
 """Unit tests for the Azure Batch executor plugin."""
 
-from unittest.mock import MagicMock
+import os
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from azure.batch import models
 
-from covalent_azurebatch_plugin.azurebatch import AzureBatchExecutor
+from covalent_azurebatch_plugin.azurebatch import (
+    FUNC_FILENAME,
+    RESULT_FILENAME,
+    STORAGE_CONTAINER_NAME,
+    AzureBatchExecutor,
+)
+from covalent_azurebatch_plugin.exceptions import BatchTaskFailedException, NoBatchTasksException
 
 
 class TestAzureBatchExecutor:
@@ -45,6 +52,7 @@ class TestAzureBatchExecutor:
     MOCK_POLL_FREQ = 0.5
     MOCK_DISPATCH_ID = "mock-dispatch-id"
     MOCK_NODE_ID = 1
+    MOCK_CONTAINER_NAME = STORAGE_CONTAINER_NAME
 
     @pytest.fixture
     def mock_executor_config(self):
@@ -70,6 +78,7 @@ class TestAzureBatchExecutor:
         return {
             "dispatch_id": self.MOCK_DISPATCH_ID,
             "node_id": self.MOCK_NODE_ID,
+            "container_name": self.MOCK_CONTAINER_NAME,
         }
 
     @property
@@ -79,6 +88,14 @@ class TestAzureBatchExecutor:
     @property
     def MOCK_KWARGS(self):
         return {"y": 1}
+
+    @property
+    def MOCK_FUNC_FILENAME(self):
+        return FUNC_FILENAME.format(dispatch_id=self.MOCK_DISPATCH_ID, node_id=self.MOCK_NODE_ID)
+
+    @property
+    def MOCK_RESULT_FILENAME(self):
+        return RESULT_FILENAME.format(dispatch_id=self.MOCK_DISPATCH_ID, node_id=self.MOCK_NODE_ID)
 
     @pytest.fixture
     def mock_executor(self, mock_executor_config):
@@ -107,7 +124,7 @@ class TestAzureBatchExecutor:
         blob_service_client_mock = mocker.patch(
             "covalent_azurebatch_plugin.azurebatch.BlobServiceClient.__init__", return_value=None
         )
-        mock_executor._get_blob_client(credentials_mock)
+        mock_executor._get_blob_service_client(credentials_mock)
         account_uri_mock = (
             f"https://{mock_executor.storage_account_name}.{mock_executor.storage_account_domain}/"
         )
@@ -221,32 +238,172 @@ class TestAzureBatchExecutor:
     @pytest.mark.asyncio
     async def test_poll_task(self, mock_executor, mocker):
         """Test Azure Batch executor task polling."""
-
-        class MockState:
-            def __init__(self, state):
-                self.state = state
-
         asyncio_sleep_mock = mocker.patch("covalent_azurebatch_plugin.azurebatch.asyncio.sleep")
         mocker.patch(
             "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._validate_credentials"
         )
-        batch_client_mock = MagicMock()
-        mocker.patch(
-            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._get_batch_service_client",
-            return_value=batch_client_mock,
+        async_get_status_mock = AsyncMock(
+            side_effect=[
+                models.TaskState.preparing,
+                models.TaskState.running,
+                models.TaskState.completed,
+            ],
         )
-        batch_client_mock.task.list.side_effect = [
-            [MockState(models.TaskState.preparing)],
-            [MockState(models.TaskState.running)],
-            [MockState(models.TaskState.completed)],
-        ]
-        state = await mock_executor._poll_task(self.MOCK_JOB_ID)
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor.get_status",
+            side_effect=async_get_status_mock,
+        )
+
+        await mock_executor._poll_task(self.MOCK_JOB_ID)
         asyncio_sleep_mock.assert_has_calls(
             [mocker.call(self.MOCK_POLL_FREQ), mocker.call(self.MOCK_POLL_FREQ)]
         )
+
+    @pytest.mark.asyncio
+    async def test_get_status(self, mock_executor, mocker):
+        """Test Azure Batch executor get status method."""
+
+        class MockExecutionInfo:
+            def __init__(self, exit_code=0):
+                self.exit_code = exit_code
+
+        class MockTask:
+            def __init__(self, state, task_id, execution_info=MockExecutionInfo()) -> None:
+                self.state = state
+                self.id = task_id
+                self.execution_info = execution_info
+
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._validate_credentials"
+        )
+        batch_service_client_mock = MagicMock()
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._get_batch_service_client",
+            return_value=batch_service_client_mock,
+        )
+        batch_service_client_mock.task.list.return_value = [
+            MockTask(models.TaskState.completed, 1)
+        ]
+        batch_service_client_mock.task.get.return_value = MockTask(models.TaskState.completed, 1)
+        state, exit_code = await mock_executor.get_status(self.MOCK_JOB_ID)
+        assert state == models.TaskState.completed
+        assert exit_code == 0
+
+    @pytest.mark.asyncio
+    async def test_get_status_exit_code_exception(self, mock_executor, mocker):
+        """Test Azure Batch executor get status method exception being raised when exit code is non-zero."""
+
+        class MockExecutionInfo:
+            def __init__(self, exit_code=0):
+                self.exit_code = exit_code
+
+        class MockTask:
+            def __init__(self, state, task_id, execution_info=MockExecutionInfo()) -> None:
+                self.state = state
+                self.id = task_id
+                self.execution_info = execution_info
+
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._validate_credentials"
+        )
+        batch_service_client_mock = MagicMock()
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._get_batch_service_client",
+            return_value=batch_service_client_mock,
+        )
+        batch_service_client_mock.task.list.return_value = [
+            MockTask(models.TaskState.completed, 1)
+        ]
+        batch_service_client_mock.task.get.return_value = MockTask(
+            models.TaskState.completed, 1, MockExecutionInfo(-1)
+        )
+        with pytest.raises(BatchTaskFailedException):
+            await mock_executor.get_status(self.MOCK_JOB_ID)
+
+    @pytest.mark.asyncio
+    async def test_get_status_no_task_exception(self, mock_executor, mocker):
+        """Test Azure Batch executor get status method exception."""
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._validate_credentials"
+        )
+        batch_service_client_mock = MagicMock()
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._get_batch_service_client",
+            return_value=batch_service_client_mock,
+        )
+        batch_service_client_mock.task.list.return_value = []
+        with pytest.raises(NoBatchTasksException):
+            await mock_executor.get_status(self.MOCK_JOB_ID)
 
     def test_debug_log(self, mock_executor, mocker):
         """Test Azure Batch executor debug logging."""
         app_log_mock = mocker.patch("covalent_azurebatch_plugin.azurebatch.app_log")
         mock_executor._debug_log("mock-message")
         app_log_mock.debug.assert_called_once_with("Azure Batch Executor: mock-message")
+
+    def test_upload_task_to_blob(self, mock_executor, mocker):
+        """Test Azure Batch executor upload task to blob."""
+
+        def mock_func(x, y):
+            return x + y
+
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._validate_credentials"
+        )
+        blob_service_client_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._get_blob_service_client"
+        )
+
+        mock_executor._upload_task_to_blob(
+            self.MOCK_DISPATCH_ID,
+            self.MOCK_NODE_ID,
+            mock_func,
+            self.MOCK_ARGS,
+            self.MOCK_KWARGS,
+            self.MOCK_CONTAINER_NAME,
+        )
+        blob_service_client_mock().get_blob_client.assert_called_once_with(
+            container=self.MOCK_CONTAINER_NAME, blob=self.MOCK_FUNC_FILENAME
+        )
+
+    @pytest.mark.asyncio
+    async def test_upload_task(self, mock_executor, mocker):
+        """Test Azure Batch executor upload task method."""
+
+        def mock_func(x, y):
+            return x + y
+
+        upload_task_to_blob_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._upload_task_to_blob"
+        )
+        await mock_executor._upload_task(
+            mock_func, self.MOCK_ARGS, self.MOCK_KWARGS, self.MOCK_TASK_METADATA
+        )
+        upload_task_to_blob_mock.assert_called_once_with(
+            self.MOCK_DISPATCH_ID,
+            self.MOCK_NODE_ID,
+            mock_func,
+            self.MOCK_ARGS,
+            self.MOCK_KWARGS,
+            self.MOCK_CONTAINER_NAME,
+        )
+
+    @pytest.mark.asyncio
+    async def test_query_result(self, mock_executor, mocker):
+        """Test Azure Batch executor query result method."""
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._validate_credentials"
+        )
+        blob_service_client_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._get_blob_service_client"
+        )
+        load_pickle_file_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch._load_pickle_file"
+        )
+        await mock_executor.query_result(self.MOCK_TASK_METADATA)
+        blob_service_client_mock().get_blob_client().download_blob.assert_called_once_with(
+            self.MOCK_RESULT_FILENAME
+        )
+        load_pickle_file_mock.assert_called_with(
+            os.path.join(self.MOCK_CACHE_DIR, self.MOCK_RESULT_FILENAME)
+        )
