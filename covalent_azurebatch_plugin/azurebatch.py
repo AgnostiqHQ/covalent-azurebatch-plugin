@@ -102,8 +102,6 @@ class AzureBatchExecutor(RemoteExecutor):
         self.cache_dir = cache_dir or get_config("executors.azurebatch.cache_dir")
         self.poll_freq = poll_freq or get_config("executors.azurebatch.poll_freq")
 
-        Path(self.cache_dir).mkdir(parents=True, exist_ok=True)
-
         config = {
             "tenant_id": self.tenant_id,
             "client_id": self.client_id,
@@ -120,6 +118,10 @@ class AzureBatchExecutor(RemoteExecutor):
         }
         self._debug_log("Starting Azure Batch Executor with config:")
         self._debug_log(config)
+
+    def _runtime_init(self) -> None:
+        """Initialization step before running any tasks."""
+        Path(self.cache_dir).mkdir(parents=True, exist_ok=True)
 
     def _get_blob_service_client(
         self, credential: Union[bool, DefaultAzureCredential, ClientSecretCredential]
@@ -167,6 +169,8 @@ class AzureBatchExecutor(RemoteExecutor):
 
     async def run(self, function: Callable, args: List, kwargs: Dict, task_metadata: Dict) -> None:
         """Main run method for the Azure Batch executor."""
+        self._runtime_init()
+
         dispatch_id = task_metadata["dispatch_id"]
         node_id = task_metadata["node_id"]
 
@@ -200,7 +204,7 @@ class AzureBatchExecutor(RemoteExecutor):
         self._debug_log("Uploading task to Azure blob storage...")
         blob_service_client = self._get_blob_service_client(self._validate_credentials())
 
-        with tempfile.NamedTemporaryFile(dir="/tmp") as function_file:
+        with tempfile.NamedTemporaryFile(dir=self.cache_dir) as function_file:
             pickle.dump((function, args, kwargs), function_file)
             function_file.flush()
             blob_obj_filename = FUNC_FILENAME.format(dispatch_id=dispatch_id, node_id=node_id)
@@ -271,7 +275,8 @@ class AzureBatchExecutor(RemoteExecutor):
         dispatch_id = task_metadata["dispatch_id"]
         node_id = task_metadata["node_id"]
         result_filename = RESULT_FILENAME.format(dispatch_id=dispatch_id, node_id=node_id)
-        local_result_filename = os.path.join("/tmp", result_filename)
+
+        local_result_filename = os.path.join(self.cache_dir, result_filename)
 
         self._debug_log(
             f"Downloading result from Azure blob storage to {local_result_filename}..."
