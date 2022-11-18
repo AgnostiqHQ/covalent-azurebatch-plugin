@@ -232,7 +232,35 @@ class AzureBatchExecutor(RemoteExecutor):
         await _execute_partial_in_threadpool(partial_func)
 
     async def submit_task(self, task_metadata, credential):
-        pass
+        """Submit task to Azure Batch service."""
+        dispatch_id = task_metadata["dispatch_id"]
+        node_id = task_metadata["node_id"]
+
+        task_id = JOB_NAME.format(dispatch_id=dispatch_id, node_id=node_id)
+        covalent_task_func_filename = models.EnvironmentSetting(
+            name="COVALENT_TASK_FUNC_FILENAME",
+            value=FUNC_FILENAME.format(dispatch_id=dispatch_id, node_id=node_id),
+        )
+        covalent_result_filename = models.EnvironmentSetting(
+            name="COVALENT_RESULT_FILENAME",
+            value=RESULT_FILENAME.format(dispatch_id=dispatch_id, node_id=node_id),
+        )
+
+        task_container_settings = models.TaskContainerSettings(image_name=self.container_image)
+
+        constraints = models.TaskConstraints(
+            max_wall_clock=self.time_limit, max_task_retry_count=self.retries
+        )
+
+        task = models.TaskAddParameter(
+            id=task_id,
+            container_settings=task_container_settings,
+            constraints=constraints,
+            environment_settings=[covalent_task_func_filename, covalent_result_filename],
+        )
+
+        batch_client = self._get_batch_service_client(credential)
+        batch_client.task.add(task_id, task)
 
     async def get_status(self, job_id: str) -> Tuple[models.TaskState, int]:
         """Get the status of a batch task."""
