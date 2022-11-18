@@ -34,24 +34,29 @@ azure_storage_container = os.getenv("AZURE_BLOB_STORAGE_CONTAINER")
 if not azure_storage_container:
     raise ValueError("Environment variable AZURE_STORAGE_CONTAINER was not found")
 
-func_filename = os.getenv("COVALENT_TASK_FUNC_FILENAME")
-if not func_filename:
+azure_storage_account_domain = os.getenv("AZURE_BLOB_STORAGE_ACCOUNT_DOMAIN")
+if not azure_storage_account_domain:
+    raise ValueError("Environment variable AZURE_BLOB_STORAGE_ACCOUNT_DOMAIN was not found")
+
+covalent_func_filename = os.getenv("COVALENT_TASK_FUNC_FILENAME")
+if not covalent_func_filename:
     raise ValueError("Environment variable FUNC_FILENAME was not found")
 
-result_filename = os.getenv("RESULT_FILENAME")
-if not result_filename:
-    raise ValueError("Environment variable RESULT_FILENAME was not found")
+covalent_result_filename = os.getenv("COVALENT_RESULT_FILENAME")
+if not covalent_result_filename:
+    raise ValueError("Environment variable COVALENT_RESULT_FILENAME was not found")
 
-local_func_filename = os.path.join(work_dir, func_filename)
-local_result_filename = os.path.join(work_dir, result_filename)
+local_func_filename = os.path.join(work_dir, covalent_func_filename)
+local_result_filename = os.path.join(work_dir, covalent_result_filename)
 
-azure_account_url = f"https://{azure_storage_account}.blob.core.windows.net/"
+azure_account_url = f"https://{azure_storage_account}.{azure_storage_account_domain}/"
 
 print(f"Using azure storage account: {azure_storage_account}")
 print(f"Using azure storage account url: {azure_account_url}")
 print(f"Using azure storage container: {azure_storage_container}")
-print(f"Using function filename: {func_filename}")
-print(f"Using result filename: {result_filename}")
+print(f"Using azure storage account domain: {azure_storage_account_domain}")
+print(f"Using function filename: {covalent_func_filename}")
+print(f"Using result filename: {covalent_result_filename}")
 
 # Configure azure client
 print("Authenticating with azure storage... ")
@@ -60,16 +65,16 @@ blob_service_client = BlobServiceClient(azure_account_url, credentials)
 container_client = blob_service_client.get_container_client(azure_storage_container)
 
 # Download function pickle file
-print(f"Downloading {func_filename} from azure storage to {local_func_filename}... ")
+print(f"Downloading {covalent_func_filename} from azure storage to {local_func_filename}... ")
 with open(local_func_filename, "wb") as download_file:
-    function_file_contents = container_client.download_blob(func_filename).readall()
+    function_file_contents = container_client.download_blob(covalent_func_filename).readall()
     download_file.write(function_file_contents)
 
 with open(local_func_filename, "rb") as f:
     function, args, kwargs = pickle.load(f)
 
 # Execute pickle file
-print(f"Executing {func_filename}... ")
+print(f"Executing {covalent_func_filename}... ")
 result = function(*args, **kwargs)
 
 # Upload result
@@ -78,4 +83,4 @@ with open(local_result_filename, "wb") as f:
 
 print(f"Uploading {local_result_filename}... ")
 with open(local_result_filename, "rb") as f:
-    container_client.upload_blob(result_filename,f)
+    container_client.upload_blob(covalent_result_filename, f)

@@ -237,14 +237,6 @@ class AzureBatchExecutor(RemoteExecutor):
         node_id = task_metadata["node_id"]
 
         task_id = JOB_NAME.format(dispatch_id=dispatch_id, node_id=node_id)
-        covalent_task_func_filename = models.EnvironmentSetting(
-            name="COVALENT_TASK_FUNC_FILENAME",
-            value=FUNC_FILENAME.format(dispatch_id=dispatch_id, node_id=node_id),
-        )
-        covalent_result_filename = models.EnvironmentSetting(
-            name="COVALENT_RESULT_FILENAME",
-            value=RESULT_FILENAME.format(dispatch_id=dispatch_id, node_id=node_id),
-        )
 
         task_container_settings = models.TaskContainerSettings(image_name=self.container_image)
 
@@ -252,11 +244,36 @@ class AzureBatchExecutor(RemoteExecutor):
             max_wall_clock=self.time_limit, max_task_retry_count=self.retries
         )
 
+        covalent_task_func_filename_env = models.EnvironmentSetting(
+            name="COVALENT_TASK_FUNC_FILENAME",
+            value=FUNC_FILENAME.format(dispatch_id=dispatch_id, node_id=node_id),
+        )
+        covalent_result_filename_env = models.EnvironmentSetting(
+            name="COVALENT_RESULT_FILENAME",
+            value=RESULT_FILENAME.format(dispatch_id=dispatch_id, node_id=node_id),
+        )
+        azure_storage_account_env = models.EnvironmentSetting(
+            name="AZURE_BLOB_STORAGE_ACCOUNT", value=self.storage_account_name
+        )
+        azure_storage_container_env = models.EnvironmentSetting(
+            name="AZURE_BLOB_STORAGE_CONTAINER",
+            value=STORAGE_CONTAINER_NAME.format(dispatch_id=dispatch_id, node_id=node_id),
+        )
+        azure_storage_account_domain_env = models.EnvironmentSetting(
+            name="AZURE_BLOB_STORAGE_ACCOUNT_DOMAIN", value=self.storage_account_domain
+        )
+
         task = models.TaskAddParameter(
             id=task_id,
             container_settings=task_container_settings,
             constraints=constraints,
-            environment_settings=[covalent_task_func_filename, covalent_result_filename],
+            environment_settings=[
+                covalent_task_func_filename_env,
+                covalent_result_filename_env,
+                azure_storage_account_env,
+                azure_storage_container_env,
+                azure_storage_account_domain_env,
+            ],
         )
 
         batch_client = self._get_batch_service_client(credential)
