@@ -9,12 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed 
 
-- Changed client arguments from `credentials` to `credential`.
+- Changed client arguments from `credentials` to `credential` for blob storage client.
 
 ### Added 
 
 - Implementation of submit_task and cancel methods.
 - Unit tests for the corresponding methods.
+- Unit test to ensure that environment variable setting exceptions are being raised.
+
+### Changed
+- Storage account domain name is read from the executor attributes instead of being hardcoded.
 
 ## [0.6.0] - 2022-11-17
 
