@@ -44,6 +44,7 @@ _EXECUTOR_PLUGIN_DEFAULTS = {
     "client_id": "",
     "client_secret": "",
     "batch_account_url": "",
+    "batch_account_domain": "batch.core.windows.net",
     "storage_account_name": "covalentbatch",  # TODO - Change default to empty string after
     "storage_account_domain": "blob.core.windows.net",
     "pool_id": "",
@@ -63,8 +64,6 @@ STORAGE_CONTAINER_NAME = (
 )
 JOB_NAME = "covalent-batch-{dispatch_id}-{node_id}"
 COVALENT_EXEC_BASE_URI = "covalentbatch.azurecr.io/covalent-azurebatch-executor:test3"
-BATCH_RESOURCE = "https://batch.core.windows.net/"
-BLOB_RESOURCE = "https://blob.core.windows.net/"
 
 
 class AzureBatchExecutor(RemoteExecutor):
@@ -76,6 +75,7 @@ class AzureBatchExecutor(RemoteExecutor):
         client_id: str = None,
         client_secret: str = None,
         batch_account_url: str = None,
+        batch_account_domain: str = None,
         storage_account_name: str = None,
         storage_account_domain: str = None,
         pool_id: str = None,
@@ -91,6 +91,9 @@ class AzureBatchExecutor(RemoteExecutor):
         self.client_secret = client_secret or get_config("executors.azurebatch.client_secret")
         self.batch_account_url = batch_account_url or get_config(
             "executors.azurebatch.batch_account_url"
+        )
+        self.batch_account_domain = batch_account_domain or get_config(
+            "executors.azurebatch.batch_account_domain"
         )
         self.storage_account_name = storage_account_name or get_config(
             "executors.azurebatch.storage_account_name"
@@ -110,6 +113,7 @@ class AzureBatchExecutor(RemoteExecutor):
             "client_id": self.client_id,
             "client_secret": self.client_secret,
             "batch_account_url": self.batch_account_url,
+            "batch_account_domain": self.batch_account_domain,
             "storage_account_name": self.storage_account_name,
             "storage_account_domain": self.storage_account_domain,
             "pool_id": self.pool_id,
@@ -138,16 +142,18 @@ class AzureBatchExecutor(RemoteExecutor):
     def _get_blob_service_client(self) -> BlobServiceClient:
         """Get Azure Blob client."""
         self._debug_log("Initializing blob storage client...")
+        resource = f"https://{self.storage_account_name}.{self.storage_account_domain}/"
         return BlobServiceClient(
-            account_url=f"https://{self.storage_account_name}.{self.storage_account_domain}/",
-            credential=self._get_service_principal_credential(resource=BLOB_RESOURCE),
+            account_url=resource,
+            credential=self._get_service_principal_credential(resource=resource),
         )
 
     def _get_batch_service_client(self) -> BatchServiceClient:
         """Get Azure Batch client."""
         self._debug_log("Initializing batch client...")
+        resource = f"https://{self.batch_account_domain}/"
         return BatchServiceClient(
-            credentials=self._get_service_principal_credential(resource=BATCH_RESOURCE),
+            credentials=self._get_service_principal_credential(resource=resource),
             batch_url=self.batch_account_url,
         )
 
@@ -165,7 +171,6 @@ class AzureBatchExecutor(RemoteExecutor):
             raise ValueError(
                 "Failed to validate credentials. Check credentials or that the environment variables were set before starting the Covalent server. Exception raised"
             )
-
         return False
 
     def _debug_log(self, message: str) -> None:
