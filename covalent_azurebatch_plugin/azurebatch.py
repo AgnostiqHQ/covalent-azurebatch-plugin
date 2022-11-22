@@ -29,6 +29,7 @@ from typing import Any, Callable, Dict, List, Tuple, Union
 
 import cloudpickle as pickle
 from azure.batch import BatchServiceClient, models
+from azure.common.credentials import ServicePrincipalCredentials
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 from covalent._shared_files.config import get_config
@@ -43,6 +44,7 @@ _EXECUTOR_PLUGIN_DEFAULTS = {
     "client_id": "",
     "client_secret": "",
     "batch_account_url": "",
+    "batch_account_domain": "batch.core.windows.net",
     "storage_account_name": "covalentbatch",  # TODO - Change default to empty string after
     "storage_account_domain": "blob.core.windows.net",
     "pool_id": "",
@@ -61,7 +63,7 @@ STORAGE_CONTAINER_NAME = (
     "covalent-pickles"  # TODO - Change to dispatch / node id dependent name after
 )
 JOB_NAME = "covalent-batch-{dispatch_id}-{node_id}"
-COVALENT_EXEC_BASE_URI = ""
+COVALENT_EXEC_BASE_URI = "covalentbatch.azurecr.io/covalent-azurebatch-executor:test3"
 
 
 class AzureBatchExecutor(RemoteExecutor):
@@ -73,6 +75,7 @@ class AzureBatchExecutor(RemoteExecutor):
         client_id: str = None,
         client_secret: str = None,
         batch_account_url: str = None,
+        batch_account_domain: str = None,
         storage_account_name: str = None,
         storage_account_domain: str = None,
         pool_id: str = None,
@@ -88,6 +91,9 @@ class AzureBatchExecutor(RemoteExecutor):
         self.client_secret = client_secret or get_config("executors.azurebatch.client_secret")
         self.batch_account_url = batch_account_url or get_config(
             "executors.azurebatch.batch_account_url"
+        )
+        self.batch_account_domain = batch_account_domain or get_config(
+            "executors.azurebatch.batch_account_domain"
         )
         self.storage_account_name = storage_account_name or get_config(
             "executors.azurebatch.storage_account_name"
@@ -107,6 +113,7 @@ class AzureBatchExecutor(RemoteExecutor):
             "client_id": self.client_id,
             "client_secret": self.client_secret,
             "batch_account_url": self.batch_account_url,
+            "batch_account_domain": self.batch_account_domain,
             "storage_account_name": self.storage_account_name,
             "storage_account_domain": self.storage_account_domain,
             "pool_id": self.pool_id,
@@ -119,49 +126,52 @@ class AzureBatchExecutor(RemoteExecutor):
         self._debug_log("Starting Azure Batch Executor with config:")
         self._debug_log(config)
 
-    def _runtime_init(self) -> None:
+    def _dispatcher_side_init(self) -> None:
         """Initialization step before running any tasks."""
         Path(self.cache_dir).mkdir(parents=True, exist_ok=True)
 
-    def _get_blob_service_client(
-        self, credential: Union[bool, DefaultAzureCredential, ClientSecretCredential]
-    ) -> BlobServiceClient:
-        """Get Azure Blob client."""
-        self._debug_log("Initializing blob storage client...")
-        return BlobServiceClient(
-            account_url=f"https://{self.storage_account_name}.{self.storage_account_domain}/",
-            credential=credential,
+    def _get_service_principal_credential(self, resource: str) -> ServicePrincipalCredentials:
+        """Get credential for blob service client."""
+        return ServicePrincipalCredentials(
+            client_id=self.client_id,
+            secret=self.client_secret,
+            tenant=self.tenant_id,
+            resource=resource,
         )
 
-    def _get_batch_service_client(
-        self, credential: Union[bool, DefaultAzureCredential, ClientSecretCredential]
-    ) -> BatchServiceClient:
+    def _get_blob_service_client(self) -> BlobServiceClient:
+        """Get Azure Blob client."""
+        self._debug_log("Initializing blob storage client...")
+        resource = f"https://{self.storage_account_name}.{self.storage_account_domain}/"
+        return BlobServiceClient(
+            account_url=resource,
+            credential=self._get_service_principal_credential(resource=resource),
+        )
+
+    def _get_batch_service_client(self) -> BatchServiceClient:
         """Get Azure Batch client."""
         self._debug_log("Initializing batch client...")
-        return BatchServiceClient(credential=credential, batch_url=self.batch_account_url)
+        resource = f"https://{self.batch_account_domain}/"
+        return BatchServiceClient(
+            credentials=self._get_service_principal_credential(resource=resource),
+            batch_url=self.batch_account_url,
+        )
 
-    def _validate_credentials(
-        self, raise_exception: bool = True
-    ) -> Union[bool, DefaultAzureCredential, ClientSecretCredential]:
+    def _validate_credentials(self, raise_exception: bool = True) -> bool:
         """Validate user-specified Microsoft Azure credentials or environment variables (configured before starting the server). Note: credentials passed should be those of a service principal rather than a developer account.
 
         Args:
             raise_exception (bool, optional): Status of whether to raise exception. Defaults to True.
         """
-        try:
-            if self.tenant_id and self.client_id and self.client_secret:
-                self._debug_log("Returning credentials from user-specified values.")
-                return ClientSecretCredential(self.tenant_id, self.client_id, self.client_secret)
-            else:
-                self._debug_log("Returning default credentials.")
-                return DefaultAzureCredential()
-        except Exception as e:
-            if raise_exception:
-                raise e
-            self._debug_log(
-                f"Failed to validate credentials. Check credentials or that the environment variables were set before starting the Covalent server. Exception raised: {e}"
+        if self.tenant_id and self.client_id and self.client_secret:
+            self._debug_log("Credentials are valid.")
+            return True
+
+        elif raise_exception:
+            raise ValueError(
+                "Failed to validate credentials. Check credentials or that the environment variables were set before starting the Covalent server. Exception raised"
             )
-            return False
+        return False
 
     def _debug_log(self, message: str) -> None:
         """Debug log message template."""
@@ -169,7 +179,7 @@ class AzureBatchExecutor(RemoteExecutor):
 
     async def run(self, function: Callable, args: List, kwargs: Dict, task_metadata: Dict) -> None:
         """Main run method for the Azure Batch executor."""
-        self._runtime_init()
+        self._dispatcher_side_init()
 
         dispatch_id = task_metadata["dispatch_id"]
         node_id = task_metadata["node_id"]
@@ -238,10 +248,10 @@ class AzureBatchExecutor(RemoteExecutor):
 
         task_id = JOB_NAME.format(dispatch_id=dispatch_id, node_id=node_id)
 
-        task_container_settings = models.TaskContainerSettings(image_name=self.container_image)
+        task_container_settings = models.TaskContainerSettings(image_name=COVALENT_EXEC_BASE_URI)
 
         constraints = models.TaskConstraints(
-            max_wall_clock=self.time_limit, max_task_retry_count=self.retries
+            max_wall_clock_time=self.time_limit, max_task_retry_count=self.retries
         )
 
         covalent_task_func_filename_env = models.EnvironmentSetting(
@@ -277,7 +287,11 @@ class AzureBatchExecutor(RemoteExecutor):
         )
 
         batch_client = self._get_batch_service_client(credential)
-        batch_client.task.add(task_id, task)
+        job = models.JobAddParameter(
+            id=self.job_id, pool_info=models.PoolInformation(pool_id=self.pool_id)
+        )
+        batch_client.job.add(job)
+        batch_client.task.add(job_id=job.id, task=task)
 
     async def get_status(self, job_id: str) -> Tuple[models.TaskState, int]:
         """Get the status of a batch task."""
