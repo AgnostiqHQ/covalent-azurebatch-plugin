@@ -273,9 +273,6 @@ class AzureBatchExecutor(RemoteExecutor):
             name="AZURE_BLOB_STORAGE_ACCOUNT_DOMAIN", value=self.storage_account_domain
         )
 
-        # TODO - Add connecting to pool via pool_id
-        # TODO - Group tasks under a job identified via the dispatch_id
-
         task = models.TaskAddParameter(
             id=task_id,
             container_settings=task_container_settings,
@@ -290,7 +287,11 @@ class AzureBatchExecutor(RemoteExecutor):
         )
 
         batch_client = self._get_batch_service_client(credential)
-        batch_client.task.add(task_id, task)
+        job = models.JobAddParameter(
+            id=self.job_id, pool_info=models.PoolInformation(pool_id=self.pool_id)
+        )
+        batch_client.job.add(job)
+        batch_client.task.add(job_id=job.id, task=task)
 
     async def get_status(self, job_id: str) -> Tuple[models.TaskState, int]:
         """Get the status of a batch task."""
