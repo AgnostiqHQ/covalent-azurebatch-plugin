@@ -24,7 +24,7 @@ import cloudpickle as pickle
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 
-work_dir = os.environ.get("EXECUTOR_WORKDIR", "/covalent")
+work_dir = os.environ.get("EXECUTOR_WORKDIR", "/tmp")
 
 azure_storage_account = os.getenv("AZURE_BLOB_STORAGE_ACCOUNT")
 if not azure_storage_account:
@@ -57,6 +57,10 @@ print(f"Using azure storage container: {azure_storage_container}")
 print(f"Using azure storage account domain: {azure_storage_account_domain}")
 print(f"Using function filename: {covalent_func_filename}")
 print(f"Using result filename: {covalent_result_filename}")
+print(f"AZ_BATCH_NODE_ROOT_DIR: {os.getenv('AZ_BATCH_NODE_ROOT_DIR')}")
+print(f"XDG_CONFIG_DIR: {os.getenv('XDG_CONFIG_DIR')}")
+print(f"XDG_CACHE_HOME: {os.getenv('XDG_CACHE_HOME')}")
+print(f"XDG_DATA_HOME: {os.getenv('XDG_DATA_HOME')}")
 
 # Configure azure client
 print("Authenticating with azure storage... ")
