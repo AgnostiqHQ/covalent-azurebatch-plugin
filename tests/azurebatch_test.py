@@ -263,9 +263,9 @@ class TestAzureBatchExecutor:
         )
         async_get_status_mock = AsyncMock(
             side_effect=[
-                models.TaskState.preparing,
-                models.TaskState.running,
-                models.TaskState.completed,
+                (models.TaskState.preparing, None),
+                (models.TaskState.running, None),
+                (models.TaskState.completed, 0),
             ],
         )
         mocker.patch(
@@ -277,6 +277,28 @@ class TestAzureBatchExecutor:
         asyncio_sleep_mock.assert_has_calls(
             [mocker.call(self.MOCK_POLL_FREQ), mocker.call(self.MOCK_POLL_FREQ)]
         )
+
+    @pytest.mark.asyncio
+    async def test_poll_task_exception_raised(self, mock_executor, mocker):
+        """Test Azure Batch executor task polling."""
+        mocker.patch("covalent_azurebatch_plugin.azurebatch.asyncio.sleep")
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._validate_credentials"
+        )
+        async_get_status_mock = AsyncMock(
+            side_effect=[
+                (models.TaskState.preparing, None),
+                (models.TaskState.running, None),
+                (models.TaskState.completed, -1),
+            ],
+        )
+        mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor.get_status",
+            side_effect=async_get_status_mock,
+        )
+
+        with pytest.raises(BatchTaskFailedException):
+            await mock_executor._poll_task(self.MOCK_JOB_ID)
 
     @pytest.mark.asyncio
     async def test_get_status(self, mock_executor, mocker):
