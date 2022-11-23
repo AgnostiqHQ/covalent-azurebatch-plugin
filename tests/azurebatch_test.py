@@ -42,6 +42,7 @@ class TestAzureBatchExecutor:
     MOCK_CLIENT_ID = "mock-client-id"
     MOCK_CLIENT_SECRET = "mock-client-secret"
     MOCK_BATCH_ACCOUNT_URL = "mock-batch-account-url"
+    MOCK_BATCH_ACCOUNT_DOMAIN = "mock-batch-account-domain"
     MOCK_STORAGE_ACCOUNT_NAME = "mock-storage-account-name"
     MOCK_STORAGE_ACCOUNT_DOMAIN = "mock-storage-account-domain"
     MOCK_POOL_ID = "mock-pool-id"
@@ -61,6 +62,7 @@ class TestAzureBatchExecutor:
             "client_id": self.MOCK_CLIENT_ID,
             "client_secret": self.MOCK_CLIENT_SECRET,
             "batch_account_url": self.MOCK_BATCH_ACCOUNT_URL,
+            "batch_account_domain": self.MOCK_BATCH_ACCOUNT_DOMAIN,
             "storage_account_name": self.MOCK_STORAGE_ACCOUNT_NAME,
             "storage_account_domain": self.MOCK_STORAGE_ACCOUNT_DOMAIN,
             "pool_id": self.MOCK_POOL_ID,
@@ -116,7 +118,34 @@ class TestAzureBatchExecutor:
         for executor_attr in mock_executor_config:
             assert getattr(batch_executor, executor_attr) == mock_executor_config[executor_attr]
 
-    def test_get_blob_client(self, mock_executor, mocker):
+    def test_get_blob_service_client_credential(self, mock_executor, mocker):
+        """Test getting a blob service client with a credential."""
+        client_secret_credential_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.ClientSecretCredential"
+        )
+        credentials = mock_executor._get_blob_service_client_credential()
+        client_secret_credential_mock.assert_called_once_with(
+            client_id=mock_executor.client_id,
+            client_secret=mock_executor.client_secret,
+            tenant_id=mock_executor.tenant_id,
+        )
+        assert credentials == client_secret_credential_mock()
+
+    def test_get_batch_service_client_credential(self, mock_executor, mocker):
+        """Test getting a batch service client with a credential."""
+        service_principal_credentials_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.ServicePrincipalCredentials"
+        )
+        credentials = mock_executor._get_batch_service_client_credential()
+        service_principal_credentials_mock.assert_called_once_with(
+            client_id=mock_executor.client_id,
+            secret=mock_executor.client_secret,
+            tenant=mock_executor.tenant_id,
+            resource=f"https://{mock_executor.batch_account_domain}/",
+        )
+        assert credentials == service_principal_credentials_mock()
+
+    def test_get_blob_service_client(self, mock_executor, mocker):
         """Test Azure Batch executor blob client getter."""
         blob_service_client_mock = mocker.patch(
             "covalent_azurebatch_plugin.azurebatch.BlobServiceClient"
@@ -132,7 +161,7 @@ class TestAzureBatchExecutor:
             account_url=account_url_mock, credential=credential_mock()
         )
 
-    def test_get_batch_client(self, mock_executor, mocker):
+    def test_get_batch_service_client(self, mock_executor, mocker):
         """Test Azure Batch executor batch client getter."""
         batch_service_client_mock = mocker.patch(
             "covalent_azurebatch_plugin.azurebatch.BatchServiceClient"
