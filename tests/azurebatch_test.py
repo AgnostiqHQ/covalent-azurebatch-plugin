@@ -222,47 +222,37 @@ class TestAzureBatchExecutor:
             ("mock-tenant-id", "mock-client-id", "mock-cllient-secret"),
         ],
     )
-    def test_validate_credentials(
-        self, mock_executor, mocker, tenant_id, client_id, client_secret
-    ):
+    def test_validate_credentials(self, mock_executor, tenant_id, client_id, client_secret):
         """Test Azure Batch executor credential validation."""
         mock_executor.tenant_id = tenant_id
         mock_executor.client_id = client_id
         mock_executor.client_secret = client_secret
 
-        secret_credential_mock = MagicMock()
-        default_credential_mock = MagicMock()
-
-        mocker.patch(
-            "covalent_azurebatch_plugin.azurebatch.ClientSecretCredential",
-            return_value=secret_credential_mock,
-        )
-        mocker.patch(
-            "covalent_azurebatch_plugin.azurebatch.DefaultAzureCredential",
-            return_value=default_credential_mock,
-        )
-
-        credentials = mock_executor._validate_credentials()
+        credentials = mock_executor._validate_credentials(raise_exception=False)
         if tenant_id and client_id and client_secret:
-            assert credentials == secret_credential_mock
+            assert credentials is True
         else:
-            assert credentials == default_credential_mock
+            assert credentials is False
 
-    def test_validate_credentials_exception_raised(self, mock_executor, mocker):
+    @pytest.mark.parametrize(
+        "tenant_id,client_id,client_secret",
+        [
+            (None, None, None),
+            ("mock-tenant-id", "mock-client-id", None),
+            ("mock-tenant-id", None, "mock-cllient-secret"),
+            (None, "mock-client-id", "mock-cllient-secret"),
+        ],
+    )
+    def test_validate_credentials_exception_raised(
+        self, tenant_id, client_id, client_secret, mock_executor
+    ):
         """Test Azure Batch executor credential validation exception being raised."""
-        mocker.patch(
-            "covalent_azurebatch_plugin.azurebatch.ClientSecretCredential", side_effect=Exception
-        )
-        with pytest.raises(Exception):
-            mock_executor._validate_credentials()
+        mock_executor.tenant_id = tenant_id
+        mock_executor.client_id = client_id
+        mock_executor.client_secret = client_secret
 
-    def test_validate_credentials_exception_not_raised(self, mock_executor, mocker):
-        """Test Azure Batch executor credential validation exception not being raised."""
-        mocker.patch(
-            "covalent_azurebatch_plugin.azurebatch.ClientSecretCredential", side_effect=Exception
-        )
-        credential = mock_executor._validate_credentials(raise_exception=False)
-        assert not credential
+        with pytest.raises(ValueError):
+            mock_executor._validate_credentials()
 
     @pytest.mark.asyncio
     async def test_poll_task(self, mock_executor, mocker):
