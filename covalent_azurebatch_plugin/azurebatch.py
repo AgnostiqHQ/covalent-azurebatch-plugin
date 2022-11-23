@@ -23,6 +23,7 @@
 import asyncio
 import os
 import tempfile
+from datetime import timedelta
 from functools import partial
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Tuple, Union
@@ -63,7 +64,7 @@ STORAGE_CONTAINER_NAME = (
     "covalent-pickles"  # TODO - Change to dispatch / node id dependent name after
 )
 JOB_NAME = "covalent-batch-{dispatch_id}-{node_id}"
-COVALENT_EXEC_BASE_URI = "covalentbatch.azurecr.io/covalent-azurebatch-executor:test3"
+COVALENT_EXEC_BASE_URI = "covalentbatch.azurecr.io/covalent-azurebatch-executor:latest"
 
 
 class AzureBatchExecutor(RemoteExecutor):
@@ -81,11 +82,14 @@ class AzureBatchExecutor(RemoteExecutor):
         pool_id: str = None,
         job_id: str = None,
         retries: int = None,
-        time_limit: float = None,
+        time_limit: float = None,  # Time in seconds
         cache_dir: str = None,
         poll_freq: int = None,
+        **kwargs,
     ) -> None:
         """Azure Batch executor initialization."""
+        super().__init__(**kwargs)
+
         self.tenant_id = tenant_id or get_config("executors.azurebatch.tenant_id")
         self.client_id = client_id or get_config("executors.azurebatch.client_id")
         self.client_secret = client_secret or get_config("executors.azurebatch.client_secret")
@@ -130,7 +134,7 @@ class AzureBatchExecutor(RemoteExecutor):
         """Initialization step before running any tasks."""
         Path(self.cache_dir).mkdir(parents=True, exist_ok=True)
 
-    def _get_service_principal_credential(self, resource: str) -> ServicePrincipalCredentials:
+    def _get_batch_service_client_credential(self, resource: str) -> ServicePrincipalCredentials:
         """Get credential for blob service client."""
         return ServicePrincipalCredentials(
             client_id=self.client_id,
@@ -139,13 +143,25 @@ class AzureBatchExecutor(RemoteExecutor):
             resource=resource,
         )
 
+    def _get_blob_service_client_credential(
+        self,
+    ) -> Union[DefaultAzureCredential, ClientSecretCredential]:
+        """Get credential for blob service client."""
+        if self.client_id and self.client_secret and self.tenant_id:
+            return ClientSecretCredential(
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+                tenant_id=self.tenant_id,
+            )
+        return DefaultAzureCredential()
+
     def _get_blob_service_client(self) -> BlobServiceClient:
         """Get Azure Blob client."""
         self._debug_log("Initializing blob storage client...")
         resource = f"https://{self.storage_account_name}.{self.storage_account_domain}/"
         return BlobServiceClient(
             account_url=resource,
-            credential=self._get_service_principal_credential(resource=resource),
+            credential=self._get_blob_service_client_credential(),
         )
 
     def _get_batch_service_client(self) -> BatchServiceClient:
@@ -153,7 +169,7 @@ class AzureBatchExecutor(RemoteExecutor):
         self._debug_log("Initializing batch client...")
         resource = f"https://{self.batch_account_domain}/"
         return BatchServiceClient(
-            credentials=self._get_service_principal_credential(resource=resource),
+            credentials=self._get_batch_service_client_credential(resource=resource),
             batch_url=self.batch_account_url,
         )
 
@@ -183,6 +199,7 @@ class AzureBatchExecutor(RemoteExecutor):
 
         dispatch_id = task_metadata["dispatch_id"]
         node_id = task_metadata["node_id"]
+        self.job_id = JOB_NAME.format(dispatch_id=dispatch_id, node_id=node_id)
 
         self._debug_log(f"Executing Dispatch ID {dispatch_id} Node {node_id}...")
 
@@ -195,8 +212,8 @@ class AzureBatchExecutor(RemoteExecutor):
         self._debug_log("Submitting task to Batch service...")
         job_id = await self.submit_task(task_metadata, credential)
 
-        self._debug_log(f"Job id: {job_id}")
-        await self._poll_task(job_id)
+        self._debug_log(f"Job id: {self.job_id}")
+        await self._poll_task(self.job_id)
 
         self._debug_log("Querying result...")
         return await self.query_result(task_metadata)
@@ -212,7 +229,7 @@ class AzureBatchExecutor(RemoteExecutor):
     ) -> None:
         """Upload task to Azure blob storage."""
         self._debug_log("Uploading task to Azure blob storage...")
-        blob_service_client = self._get_blob_service_client(self._validate_credentials())
+        blob_service_client = self._get_blob_service_client()
 
         with tempfile.NamedTemporaryFile(dir=self.cache_dir) as function_file:
             pickle.dump((function, args, kwargs), function_file)
@@ -251,7 +268,8 @@ class AzureBatchExecutor(RemoteExecutor):
         task_container_settings = models.TaskContainerSettings(image_name=COVALENT_EXEC_BASE_URI)
 
         constraints = models.TaskConstraints(
-            max_wall_clock_time=self.time_limit, max_task_retry_count=self.retries
+            max_wall_clock_time=timedelta(seconds=self.time_limit),
+            max_task_retry_count=self.retries,
         )
 
         covalent_task_func_filename_env = models.EnvironmentSetting(
@@ -275,6 +293,7 @@ class AzureBatchExecutor(RemoteExecutor):
 
         task = models.TaskAddParameter(
             id=task_id,
+            command_line="",
             container_settings=task_container_settings,
             constraints=constraints,
             environment_settings=[
@@ -286,24 +305,25 @@ class AzureBatchExecutor(RemoteExecutor):
             ],
         )
 
-        batch_client = self._get_batch_service_client(credential)
+        batch_client = self._get_batch_service_client()
         job = models.JobAddParameter(
             id=self.job_id, pool_info=models.PoolInformation(pool_id=self.pool_id)
         )
         batch_client.job.add(job)
-        batch_client.task.add(job_id=job.id, task=task)
+        batch_client.task.add(job_id=self.job_id, task=task)
+        return self.job_id
 
     async def get_status(self, job_id: str) -> Tuple[models.TaskState, int]:
         """Get the status of a batch task."""
         self._debug_log(f"Getting status for job id: {job_id}")
         credential = self._validate_credentials()
-        batch_client = self._get_batch_service_client(credential)
+        batch_client = self._get_batch_service_client()
 
         partial_func = partial(batch_client.task.list, job_id)
-        tasks = await _execute_partial_in_threadpool(partial_func)
+        tasks = list(await _execute_partial_in_threadpool(partial_func))
 
         self._debug_log(f"Batch tasks list: {tasks}")
-        if len(tasks) == 0:
+        if not tasks:
             raise NoBatchTasksException
 
         partial_func = partial(batch_client.task.get, job_id, tasks[0].id)
@@ -311,8 +331,6 @@ class AzureBatchExecutor(RemoteExecutor):
 
         self._debug_log(f"Cloud task execution info: {cloud_task.execution_info}")
         exit_code = cloud_task.execution_info.exit_code
-        if exit_code != 0:
-            raise BatchTaskFailedException(exit_code)
 
         return tasks[0].state, exit_code
 
@@ -323,7 +341,10 @@ class AzureBatchExecutor(RemoteExecutor):
 
         while status != models.TaskState.completed:
             await asyncio.sleep(self.poll_freq)
-            status = await self.get_status(job_id)
+            status, exit_code = await self.get_status(job_id)
+
+        if exit_code != 0:
+            raise BatchTaskFailedException(exit_code)
 
     async def cancel(self, job_id, reason):
         pass
@@ -342,16 +363,20 @@ class AzureBatchExecutor(RemoteExecutor):
         )
 
         credential = self._validate_credentials()
-        blob_service_client = self._get_blob_service_client(credential)
+        blob_service_client = self._get_blob_service_client()
 
         container_name = STORAGE_CONTAINER_NAME.format(dispatch_id=dispatch_id, node_id=node_id)
-        blob_client = blob_service_client.get_blob_client(container=container_name)
+        blob_client = blob_service_client.get_blob_client(
+            container=container_name, blob=result_filename
+        )
 
         self._debug_log(
             f"Downloading result object from blob to local file {local_result_filename}..."
         )
-        partial_func = partial(blob_client.download_blob, result_filename)
-        await _execute_partial_in_threadpool(partial_func)
+        partial_func = partial(blob_client.download_blob)
+        with open(local_result_filename, "wb") as my_blob:
+            download_stream = await _execute_partial_in_threadpool(partial_func)
+            my_blob.write(download_stream.readall())
 
         self._debug_log(f"Loading result object from local file {local_result_filename}...")
         partial_func = partial(_load_pickle_file, local_result_filename)
