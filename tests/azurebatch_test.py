@@ -134,13 +134,15 @@ class TestAzureBatchExecutor:
 
     def test_get_batch_client(self, mock_executor, mocker):
         """Test Azure Batch executor batch client getter."""
-        credential_mock = MagicMock()
         batch_service_client_mock = mocker.patch(
-            "covalent_azurebatch_plugin.azurebatch.BatchServiceClient.__init__", return_value=None
+            "covalent_azurebatch_plugin.azurebatch.BatchServiceClient"
         )
-        mock_executor._get_batch_service_client(credential_mock)
+        credential_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._get_batch_service_client_credential"
+        )
+        mock_executor._get_batch_service_client()
         batch_service_client_mock.assert_called_once_with(
-            credential=credential_mock, batch_url=mock_executor.batch_account_url
+            credentials=credential_mock(), batch_url=mock_executor.batch_account_url
         )
 
     @pytest.mark.asyncio
