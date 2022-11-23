@@ -53,6 +53,7 @@ class TestAzureBatchExecutor:
     MOCK_DISPATCH_ID = "mock-dispatch-id"
     MOCK_NODE_ID = 1
     MOCK_CONTAINER_NAME = STORAGE_CONTAINER_NAME
+    MOCK_JOB_ID = "mock-job-id"
 
     @pytest.fixture
     def mock_executor_config(self):
@@ -78,7 +79,6 @@ class TestAzureBatchExecutor:
         return {
             "dispatch_id": self.MOCK_DISPATCH_ID,
             "node_id": self.MOCK_NODE_ID,
-            "container_name": self.MOCK_CONTAINER_NAME,
         }
 
     @property
@@ -181,10 +181,8 @@ class TestAzureBatchExecutor:
         def mock_func(x, y):
             return x + y
 
-        credential_mock = MagicMock()
         validate_credentials_mock = mocker.patch(
             "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._validate_credentials",
-            return_value=credential_mock,
         )
         upload_task_mock = mocker.patch(
             "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._upload_task"
@@ -212,7 +210,7 @@ class TestAzureBatchExecutor:
         upload_task_mock.assert_called_once_with(
             mock_func, self.MOCK_ARGS, self.MOCK_KWARGS, self.MOCK_TASK_METADATA
         )
-        submit_task_mock.assert_called_once_with(self.MOCK_TASK_METADATA, credential_mock)
+        submit_task_mock.assert_called_once_with(self.MOCK_TASK_METADATA)
         poll_task_mock.assert_called_once_with(self.MOCK_JOB_ID)
         query_result_mock.assert_called_once_with(self.MOCK_TASK_METADATA)
 
