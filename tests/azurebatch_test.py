@@ -45,7 +45,6 @@ class TestAzureBatchExecutor:
     MOCK_STORAGE_ACCOUNT_NAME = "mock-storage-account-name"
     MOCK_STORAGE_ACCOUNT_DOMAIN = "mock-storage-account-domain"
     MOCK_POOL_ID = "mock-pool-id"
-    MOCK_JOB_ID = "mock-job-id"
     MOCK_RETRIES = 2
     MOCK_TIME_LIMIT = 3
     MOCK_CACHE_DIR = "/tmp/covalent"
@@ -65,7 +64,6 @@ class TestAzureBatchExecutor:
             "storage_account_name": self.MOCK_STORAGE_ACCOUNT_NAME,
             "storage_account_domain": self.MOCK_STORAGE_ACCOUNT_DOMAIN,
             "pool_id": self.MOCK_POOL_ID,
-            "job_id": self.MOCK_JOB_ID,
             "retries": self.MOCK_RETRIES,
             "time_limit": self.MOCK_TIME_LIMIT,
             "cache_dir": self.MOCK_CACHE_DIR,
