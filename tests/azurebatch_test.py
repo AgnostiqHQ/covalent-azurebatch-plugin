@@ -401,22 +401,18 @@ class TestAzureBatchExecutor:
     @pytest.mark.asyncio
     async def test_query_result(self, mock_executor, mocker):
         """Test Azure Batch executor query result method."""
-        mocker.patch(
-            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._validate_credentials"
-        )
-        blob_service_client_mock = mocker.patch(
-            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._get_blob_service_client"
+        download_result_from_blob_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._download_result_from_blob"
         )
         load_pickle_file_mock = mocker.patch(
             "covalent_azurebatch_plugin.azurebatch._load_pickle_file"
         )
         await mock_executor.query_result(self.MOCK_TASK_METADATA)
-        blob_service_client_mock().get_blob_client().download_blob.assert_called_once_with(
-            self.MOCK_RESULT_FILENAME
+        local_result_filename = os.path.join(self.MOCK_CACHE_DIR, self.MOCK_RESULT_FILENAME)
+        download_result_from_blob_mock.assert_called_once_with(
+            self.MOCK_DISPATCH_ID, self.MOCK_NODE_ID, local_result_filename
         )
-        load_pickle_file_mock.assert_called_with(
-            os.path.join(self.MOCK_CACHE_DIR, self.MOCK_RESULT_FILENAME)
-        )
+        load_pickle_file_mock.assert_called_with(local_result_filename)
 
     @pytest.mark.asyncio
     async def test_cancel(self, mock_executor, mocker):
