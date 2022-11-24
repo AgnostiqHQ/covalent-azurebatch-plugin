@@ -415,6 +415,24 @@ class TestAzureBatchExecutor:
         load_pickle_file_mock.assert_called_with(local_result_filename)
 
     @pytest.mark.asyncio
+    async def test_download_result_from_blob(self, mock_executor, mocker):
+        """Test Azure Batch executor download result from blob method."""
+        blob_service_client_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._get_blob_service_client"
+        )
+        local_result_filename = os.path.join(self.MOCK_CACHE_DIR, self.MOCK_RESULT_FILENAME)
+        open_file_mock = mocker.patch("builtins.open", mocker.mock_open())
+        mock_executor._download_result_from_blob(
+            self.MOCK_DISPATCH_ID, self.MOCK_NODE_ID, local_result_filename
+        )
+        blob_service_client_mock().get_blob_client.assert_called_once_with(
+            container=self.MOCK_CONTAINER_NAME, blob=self.MOCK_RESULT_FILENAME
+        )
+        open_file_mock().write.assert_called_once_with(
+            blob_service_client_mock().get_blob_client().download_blob().readall()
+        )
+
+    @pytest.mark.asyncio
     async def test_cancel(self, mock_executor, mocker):
         """Test Azure Batch executor cancel method."""
         pass
