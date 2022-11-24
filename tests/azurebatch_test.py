@@ -331,37 +331,6 @@ class TestAzureBatchExecutor:
         assert exit_code == 0
 
     @pytest.mark.asyncio
-    async def test_get_status_exit_code_exception(self, mock_executor, mocker):
-        """Test Azure Batch executor get status method exception being raised when exit code is non-zero."""
-
-        class MockExecutionInfo:
-            def __init__(self, exit_code=0):
-                self.exit_code = exit_code
-
-        class MockTask:
-            def __init__(self, state, task_id, execution_info=MockExecutionInfo()) -> None:
-                self.state = state
-                self.id = task_id
-                self.execution_info = execution_info
-
-        mocker.patch(
-            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._validate_credentials"
-        )
-        batch_service_client_mock = MagicMock()
-        mocker.patch(
-            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._get_batch_service_client",
-            return_value=batch_service_client_mock,
-        )
-        batch_service_client_mock.task.list.return_value = [
-            MockTask(models.TaskState.completed, 1)
-        ]
-        batch_service_client_mock.task.get.return_value = MockTask(
-            models.TaskState.completed, 1, MockExecutionInfo(-1)
-        )
-        with pytest.raises(BatchTaskFailedException):
-            await mock_executor.get_status(self.MOCK_JOB_ID)
-
-    @pytest.mark.asyncio
     async def test_get_status_no_task_exception(self, mock_executor, mocker):
         """Test Azure Batch executor get status method exception."""
         mocker.patch(

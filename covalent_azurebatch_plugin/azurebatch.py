@@ -337,33 +337,34 @@ class AzureBatchExecutor(RemoteExecutor):
     async def cancel(self, job_id, reason):
         pass
 
+    def _download_result_from_blob(self, dispatch_id, node_id, local_result_filename) -> None:
+        """Download result from Azure blob."""
+        self._debug_log(
+            f"Downloading result from Azure blob to local filename {local_result_filename}..."
+        )
+        blob_service_client = self._get_blob_service_client()
+        blob_client = blob_service_client.get_blob_client(
+            container=STORAGE_CONTAINER_NAME.format(dispatch_id=dispatch_id, node_id=node_id),
+            blob=RESULT_FILENAME.format(dispatch_id=dispatch_id, node_id=node_id),
+        )
+
+        with open(local_result_filename, "wb") as my_blob:
+            download_stream = blob_client.download_blob()
+            my_blob.write(download_stream.readall())
+
     async def query_result(self, task_metadata) -> Any:
         """Query result once task has completed."""
         self._debug_log("Querying result...")
         dispatch_id = task_metadata["dispatch_id"]
         node_id = task_metadata["node_id"]
-        result_filename = RESULT_FILENAME.format(dispatch_id=dispatch_id, node_id=node_id)
-
-        local_result_filename = os.path.join(self.cache_dir, result_filename)
-
-        self._debug_log(
-            f"Downloading result from Azure blob storage to {local_result_filename}..."
+        local_result_filename = os.path.join(
+            self.cache_dir, RESULT_FILENAME.format(dispatch_id=dispatch_id, node_id=node_id)
         )
 
-        blob_service_client = self._get_blob_service_client()
-
-        container_name = STORAGE_CONTAINER_NAME.format(dispatch_id=dispatch_id, node_id=node_id)
-        blob_client = blob_service_client.get_blob_client(
-            container=container_name, blob=result_filename
+        partial_func = partial(
+            self._download_result_from_blob, dispatch_id, node_id, local_result_filename
         )
-
-        self._debug_log(
-            f"Downloading result object from blob to local file {local_result_filename}..."
-        )
-        partial_func = partial(blob_client.download_blob)
-        with open(local_result_filename, "wb") as my_blob:
-            download_stream = await _execute_partial_in_threadpool(partial_func)
-            my_blob.write(download_stream.readall())
+        await _execute_partial_in_threadpool(partial_func)
 
         self._debug_log(f"Loading result object from local file {local_result_filename}...")
         partial_func = partial(_load_pickle_file, local_result_filename)
