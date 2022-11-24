@@ -243,7 +243,7 @@ class AzureBatchExecutor(RemoteExecutor):
         )
         await _execute_partial_in_threadpool(partial_func)
 
-    async def submit_task(self, task_metadata):
+    async def submit_task(self, task_metadata: Dict):
         """Submit task to Azure Batch service."""
         self._debug_log("Submitting task...")
         dispatch_id = task_metadata["dispatch_id"]
@@ -334,10 +334,19 @@ class AzureBatchExecutor(RemoteExecutor):
         if exit_code != 0:
             raise BatchTaskFailedException(exit_code)
 
-    async def cancel(self, job_id, reason):
-        pass
+    async def cancel(self, job_id: str, reason: str = None) -> None:
+        """Cancel an Azure Batch task."""
+        self._debug_log(
+            f"Cancelling Azure Batch task with job and task id {job_id} for reason {reason}..."
+        )
+        batch_service_client = self._get_batch_service_client()
+        batch_service_client.task.terminate(
+            job_id=job_id, task_id=job_id
+        )  # Currently, there is only one task per job.
 
-    def _download_result_from_blob(self, dispatch_id, node_id, local_result_filename) -> None:
+    def _download_result_from_blob(
+        self, dispatch_id: str, node_id: str, local_result_filename: str
+    ) -> None:
         """Download result from Azure blob."""
         self._debug_log(
             f"Downloading result from Azure blob to local filename {local_result_filename}..."
@@ -352,7 +361,7 @@ class AzureBatchExecutor(RemoteExecutor):
             download_stream = blob_client.download_blob()
             my_blob.write(download_stream.readall())
 
-    async def query_result(self, task_metadata) -> Any:
+    async def query_result(self, task_metadata: Dict) -> Any:
         """Query result once task has completed."""
         self._debug_log("Querying result...")
         dispatch_id = task_metadata["dispatch_id"]

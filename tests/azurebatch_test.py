@@ -121,6 +121,12 @@ class TestAzureBatchExecutor:
         for executor_attr in mock_executor_config:
             assert getattr(batch_executor, executor_attr) == mock_executor_config[executor_attr]
 
+    def test_dispatcher_side_init(self, mocker, mock_executor):
+        """Test the init method run on the dispatcher side."""
+        path_mock = mocker.patch("covalent_azurebatch_plugin.azurebatch.Path")
+        mock_executor._dispatcher_side_init()
+        path_mock().mkdir.assert_called_once_with(parents=True, exist_ok=True)
+
     def test_get_blob_service_client_credential(self, mock_executor, mocker):
         """Test getting a blob service client with a credential."""
         client_secret_credential_mock = mocker.patch(
@@ -438,7 +444,14 @@ class TestAzureBatchExecutor:
     @pytest.mark.asyncio
     async def test_cancel(self, mock_executor, mocker):
         """Test Azure Batch executor cancel method."""
-        pass
+        batch_service_client_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._get_batch_service_client"
+        )
+        job_id = JOB_NAME.format(dispatch_id=self.MOCK_DISPATCH_ID, node_id=self.MOCK_NODE_ID)
+        await mock_executor.cancel(job_id, reason="mock-reason")
+        batch_service_client_mock().task.terminate.assert_called_once_with(
+            job_id=job_id, task_id=job_id
+        )
 
     @pytest.mark.asyncio
     async def test_submit_task(self, mock_executor, mocker):
