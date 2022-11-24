@@ -22,13 +22,16 @@
 """Unit tests for the Azure Batch executor plugin."""
 
 import os
+from datetime import timedelta
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from azure.batch import models
 
 from covalent_azurebatch_plugin.azurebatch import (
+    COVALENT_EXEC_BASE_URI,
     FUNC_FILENAME,
+    JOB_NAME,
     RESULT_FILENAME,
     STORAGE_CONTAINER_NAME,
     AzureBatchExecutor,
@@ -440,4 +443,47 @@ class TestAzureBatchExecutor:
     @pytest.mark.asyncio
     async def test_submit_task(self, mock_executor, mocker):
         """Test Azure Batch executor submit task method."""
-        pass
+        models_mock = mocker.patch("covalent_azurebatch_plugin.azurebatch.models")
+        batch_service_client_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._get_batch_service_client"
+        )
+        await mock_executor.submit_task(self.MOCK_TASK_METADATA)
+        models_mock.TaskContainerSettings.assert_called_once_with(
+            image_name=COVALENT_EXEC_BASE_URI
+        )
+        models_mock.TaskConstraints.assert_called_once_with(
+            max_wall_clock_time=timedelta(seconds=self.MOCK_TIME_LIMIT),
+            max_task_retry_count=self.MOCK_RETRIES,
+        )
+        assert models_mock.EnvironmentSetting.mock_calls == [
+            mocker.call(name="COVALENT_TASK_FUNC_FILENAME", value="func-mock-dispatch-id-1.pkl"),
+            mocker.call(name="COVALENT_RESULT_FILENAME", value="result-mock-dispatch-id-1.pkl"),
+            mocker.call(name="AZURE_BLOB_STORAGE_ACCOUNT", value="mock-storage-account-name"),
+            mocker.call(name="AZURE_BLOB_STORAGE_CONTAINER", value="covalent-pickles"),
+            mocker.call(
+                name="AZURE_BLOB_STORAGE_ACCOUNT_DOMAIN", value="mock-storage-account-domain"
+            ),
+        ]
+        models_mock.TaskAddParameter.assert_called_once_with(
+            id=JOB_NAME.format(dispatch_id=self.MOCK_DISPATCH_ID, node_id=self.MOCK_NODE_ID),
+            command_line="",
+            container_settings=models_mock.TaskContainerSettings(),
+            constraints=models_mock.TaskConstraints(),
+            environment_settings=[
+                models_mock.EnvironmentSetting(),
+                models_mock.EnvironmentSetting(),
+                models_mock.EnvironmentSetting(),
+                models_mock.EnvironmentSetting(),
+                models_mock.EnvironmentSetting(),
+            ],
+        )
+        models_mock.PoolInformation.assert_called_once_with(pool_id=self.MOCK_POOL_ID)
+        models_mock.JobAddParameter.assert_called_once_with(
+            id=JOB_NAME.format(dispatch_id=self.MOCK_DISPATCH_ID, node_id=self.MOCK_NODE_ID),
+            pool_info=models_mock.PoolInformation(),
+        )
+        batch_service_client_mock().job.add.assert_called_once_with(models_mock.JobAddParameter())
+        batch_service_client_mock().task.add.assert_called_once_with(
+            job_id=JOB_NAME.format(dispatch_id=self.MOCK_DISPATCH_ID, node_id=self.MOCK_NODE_ID),
+            task=models_mock.TaskAddParameter(),
+        )
