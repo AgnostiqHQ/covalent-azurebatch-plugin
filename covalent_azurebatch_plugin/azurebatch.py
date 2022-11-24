@@ -340,9 +340,10 @@ class AzureBatchExecutor(RemoteExecutor):
             f"Cancelling Azure Batch task with job and task id {job_id} for reason {reason}..."
         )
         batch_service_client = self._get_batch_service_client()
-        batch_service_client.task.terminate(
-            job_id=job_id, task_id=job_id
+        partial_func = partial(
+            batch_service_client.task.terminate, job_id=job_id, task_id=job_id
         )  # Currently, there is only one task per job.
+        await _execute_partial_in_threadpool(partial_func)
 
     def _download_result_from_blob(
         self, dispatch_id: str, node_id: str, local_result_filename: str
