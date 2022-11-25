@@ -344,6 +344,7 @@ class AzureBatchExecutor(RemoteExecutor):
             batch_service_client.task.terminate, job_id=job_id, task_id=job_id
         )  # Currently, there is only one task per job.
         await _execute_partial_in_threadpool(partial_func)
+        self._debug_log("Task was cancelled.")
 
     def _download_result_from_blob(
         self, dispatch_id: str, node_id: str, local_result_filename: str

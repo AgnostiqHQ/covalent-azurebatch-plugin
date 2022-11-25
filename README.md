@@ -28,11 +28,26 @@ from numpy.random import permutation
 from sklearn import svm, datasets
 import covalent as ct
 
+from covalent.executor import AzureBatchExecutor
+
 deps_pip = ct.DepsPip(
     packages=["numpy==1.22.4", "scikit-learn==1.1.2"]
 )
 
-executor = ct.executor.AzureBatchExecutor(...)
+executor = AzureBatchExecutor(
+    tenant_id="tenant-id",
+    client_id="client-id",
+    client_secret="client-secret",
+    batch_account_url="https://covalent.eastus.batch.azure.com",
+    batch_account_domain="batch.core.windows.net",
+    storage_account_name="covalentbatch",
+    storage_account_domain="blob.core.windows.net",
+    pool_id="covalent-pool",
+    retries=3,
+    time_limit=300,
+    cache_dir="/tmp/covalent",
+    poll_freq=10
+)
 
 
 # Use executor plugin to train our SVM model
