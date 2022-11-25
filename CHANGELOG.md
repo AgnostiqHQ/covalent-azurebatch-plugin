@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## [0.7.0] - 2022-11-25
+
 ### Fixed 
 
 - Changed client arguments from `credentials` to `credential` for blob storage client.
