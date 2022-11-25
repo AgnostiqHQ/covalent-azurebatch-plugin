@@ -31,5 +31,5 @@ class BatchTaskFailedException(Exception):
     """Exception when a task failed with non-zero exit code."""
 
     def __init__(self, exit_code):
-        msg = f"Task failed with exit code {exit_code}"
+        msg = f"Task failed with exit code {exit_code}. Check batch task log for more details."
         super().__init__(msg)

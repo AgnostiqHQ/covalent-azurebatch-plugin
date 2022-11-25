@@ -21,7 +21,6 @@
 ARG COVALENT_BASE_IMAGE
 FROM ${COVALENT_BASE_IMAGE}
 
-COPY requirements.txt /covalent/requirements.txt
 WORKDIR /covalent
 
 RUN apt-get update && apt-get install -y \
@@ -31,6 +30,10 @@ RUN apt-get update && apt-get install -y \
   azure-identity==1.11.0 \
   azure-storage-blob==12.14.1 \
   "covalent>=0.202.0,<1"
+
+ENV XDG_CONFIG_DIR=/mnt/batch/tasks
+ENV XDG_CACHE_HOME=/mnt/batch/tasks
+ENV XDG_DATA_HOME=/mnt/batch/tasks
 
 COPY covalent_azurebatch_plugin/exec.py /covalent
 
