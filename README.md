@@ -120,12 +120,19 @@ For more information about all of the possible configuration values visit our [r
 In order to run your workflows with covalent there are a few notable Microsoft Azure resources that need to be provisioned first.
 
 The required Azure resources are:
+
     1. Batch account
+
     2. Storage account
+
     3. Resource group
+
     4. Container registry
+
     5. Virtual network
+
     6. Pool of compute nodes
+
 
 For more information regarding which cloud resources need to be provisioned visit our [read the docs (RTD) guide](https://covalent.readthedocs.io/en/latest/api/executors/azurebatch.html) for this plugin.
 
