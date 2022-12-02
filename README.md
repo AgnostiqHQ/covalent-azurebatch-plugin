@@ -23,6 +23,8 @@ pip install covalent-azurebatch-plugin
 
 This is an example of how a workflow can be constructed to use the Azure Batch executor. In the example, we train a Support Vector Machine (SVM) and use an instance of the executor to execute the `train_svm` electron. Note that we also require [DepsPip](https://covalent.readthedocs.io/en/latest/concepts/concepts.html#depspip) which will be required to execute the electrons.
 
+Note that currently at the present moment DepsPip is not supported for the Azure Batch Executor.
+
 ```python
 from numpy.random import permutation
 from sklearn import svm, datasets
@@ -53,7 +55,7 @@ executor = AzureBatchExecutor(
 # Use executor plugin to train our SVM model
 @ct.electron(
     executor=executor,
-    deps_pip=deps_pip
+    # deps_pip=deps_pip
 )
 def train_svm(data, C, gamma):
     X, y = data
