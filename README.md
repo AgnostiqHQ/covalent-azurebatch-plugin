@@ -115,7 +115,7 @@ In order for the above workflow to run successfully, one has to provision the re
 
 There are many configuration options that can be passed in to the class `ct.executor.AzureBatchExecutor` or by modifying the [covalent config file](https://covalent.readthedocs.io/en/latest/how_to/config/customization.html) under the section `[executors.azurebatch]`.
 
-For more information about all of the possible configuration values visit our [read the docs (RTD) guide](https://covalent.readthedocs.io/en/latest/api/executors/azurebatch.html) for this plugin.
+For more information about all of the possible configuration values visit our [read the docs (RTD) guide](https://covalent.readthedocs.io/en/latest/api/executors/azurebatch.html#overview-of-configuration) for this plugin.
 
 ## 4. Required Microsoft Azure Resources
 
@@ -136,7 +136,7 @@ The required Azure resources are:
     6. Pool of compute nodes
 
 
-For more information regarding which cloud resources need to be provisioned visit our [read the docs (RTD) guide](https://covalent.readthedocs.io/en/latest/api/executors/azurebatch.html) for this plugin.
+For more information regarding which cloud resources need to be provisioned visit our [read the docs (RTD) guide](https://covalent.readthedocs.io/en/latest/api/executors/azurebatch.html#required-cloud-resources) for this plugin.
 
 ## Getting Started with Covalent
 
