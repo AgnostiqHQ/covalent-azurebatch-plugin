@@ -23,6 +23,8 @@ pip install covalent-azurebatch-plugin
 
 This is an example of how a workflow can be constructed to use the Azure Batch executor. In the example, we train a Support Vector Machine (SVM) and use an instance of the executor to execute the `train_svm` electron. Note that we also require [DepsPip](https://covalent.readthedocs.io/en/latest/concepts/concepts.html#depspip) which will be required to execute the electrons.
 
+Note that currently at the present moment DepsPip is not supported for the Azure Batch Executor.
+
 ```python
 from numpy.random import permutation
 from sklearn import svm, datasets
@@ -53,7 +55,7 @@ executor = AzureBatchExecutor(
 # Use executor plugin to train our SVM model
 @ct.electron(
     executor=executor,
-    deps_pip=deps_pip
+    # deps_pip=deps_pip
 )
 def train_svm(data, C, gamma):
     X, y = data
@@ -111,11 +113,30 @@ In order for the above workflow to run successfully, one has to provision the re
 
 ## 3. Configuration
 
-Coming soon!
+There are many configuration options that can be passed in to the class `ct.executor.AzureBatchExecutor` or by modifying the [covalent config file](https://covalent.readthedocs.io/en/latest/how_to/config/customization.html) under the section `[executors.azurebatch]`.
+
+For more information about all of the possible configuration values visit our [read the docs (RTD) guide](https://covalent.readthedocs.io/en/latest/api/executors/azurebatch.html#overview-of-configuration) for this plugin.
 
 ## 4. Required Microsoft Azure Resources
 
-Coming soon!
+In order to run your workflows with covalent there are a few notable Microsoft Azure resources that need to be provisioned first.
+
+The required Azure resources are:
+
+    1. Batch account
+
+    2. Storage account
+
+    3. Resource group
+
+    4. Container registry
+
+    5. Virtual network
+
+    6. Pool of compute nodes
+
+
+For more information regarding which cloud resources need to be provisioned visit our [read the docs (RTD) guide](https://covalent.readthedocs.io/en/latest/api/executors/azurebatch.html#required-cloud-resources) for this plugin.
 
 ## Getting Started with Covalent
 
