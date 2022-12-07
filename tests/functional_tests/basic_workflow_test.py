@@ -18,27 +18,30 @@
 #
 # Relief from the License may be granted by purchasing a commercial license.
 
-[tool.black]
-target_version = ['py38']
-line-length = 99
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.tox
-  | \.venv
-)/
-'''
+import covalent as ct
+import pytest
 
-[tool.isort]
-py_version = 38
-line_length = 99
-multi_line_output = 3
-include_trailing_comma = true
-profile = 'black'
-skip_gitignore = true
 
-[tool.pytest.ini_options]
-markers = [
-    "functional_tests: marks tests that are to be run in the functional tests ci pipeline"
-]
+@pytest.mark.functional_tests
+def test_basic_workflow():
+    @ct.electron(executor="azurebatch")
+    def join_words(a, b):
+        return ", ".join([a, b])
+
+    @ct.electron
+    def excitement(a):
+        return f"{a}!"
+
+    @ct.lattice
+    def basic_workflow(a, b):
+        phrase = join_words(a, b)
+        return excitement(phrase)
+
+    # Dispatch the workflow
+    dispatch_id = ct.dispatch(basic_workflow)("Hello", "World")
+    result = ct.get_result(dispatch_id=dispatch_id, wait=True)
+    status = str(result.status)
+
+    print(result)
+
+    assert status == str(ct.status.COMPLETED)
