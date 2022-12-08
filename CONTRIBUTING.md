@@ -57,7 +57,7 @@ Contributing to the Covalent codebase should be an easy process, but there are a
 All files submitted must contain the following before all other lines:
 
 ```python
-# Copyright 2021 Agnostiq Inc.
+# Copyright 2022 Agnostiq Inc.
 #
 # This file is part of Covalent.
 #
