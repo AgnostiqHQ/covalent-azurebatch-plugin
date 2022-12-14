@@ -63,7 +63,9 @@ STORAGE_CONTAINER_NAME = (
     "covalent-pickles"  # TODO - Change to dispatch / node id dependent name after
 )
 JOB_NAME = "covalent-batch-{dispatch_id}-{node_id}"
-COVALENT_EXEC_BASE_URI = "covalentbatch.azurecr.io/covalent-azurebatch-executor:latest"
+COVALENT_EXEC_BASE_URI = os.getenv(
+    "COVALENT_EXEC_BASE_URI", "covalentbatch.azurecr.io/covalent-azurebatch-executor:latest"
+)
 
 
 class AzureBatchExecutor(RemoteExecutor):
