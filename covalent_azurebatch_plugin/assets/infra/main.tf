@@ -46,13 +46,13 @@ resource "azurerm_batch_account" "covalent" {
 }
 
 resource "azurerm_batch_pool" "covalent" {
-  name = "default"
+  name                = "default"
   resource_group_name = azurerm_resource_group.batch.name
 
   account_name = azurerm_batch_account.covalent.name
   display_name = "Covalent Azure Plugin Default Pool"
 
-  vm_size = "Standard_A1_v2"
+  vm_size           = "Standard_A1_v2"
   node_agent_sku_id = "batch.node.ubuntu 20.04"
 
   auto_scale {
@@ -76,17 +76,17 @@ EOF
   }
 
   container_configuration {
-    type = "DockerCompatible"
+    type                  = "DockerCompatible"
     container_image_names = ["${azurerm_container_registry.batch.login_server}/covalent-executor-base"]
 
     container_registries {
-      registry_server = azurerm_container_registry.batch.login_server
+      registry_server           = azurerm_container_registry.batch.login_server
       user_assigned_identity_id = azurerm_user_assigned_identity.batch.id
     }
   }
 
   identity {
-    type = "UserAssigned"
+    type         = "UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.batch.id]
   }
 }

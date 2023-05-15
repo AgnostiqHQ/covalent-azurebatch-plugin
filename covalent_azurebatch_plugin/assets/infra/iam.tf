@@ -29,14 +29,14 @@ resource "azurerm_user_assigned_identity" "batch" {
 }
 
 resource "azurerm_role_assignment" "batch_to_acr" {
-  scope = data.azurerm_subscription.current.id
-  principal_id = azurerm_user_assigned_identity.batch.principal_id
+  scope                = data.azurerm_subscription.current.id
+  principal_id         = azurerm_user_assigned_identity.batch.principal_id
   role_definition_name = "AcrPull"
 }
 
 resource "azurerm_role_assignment" "batch_to_storage" {
-  scope = data.azurerm_subscription.current.id
-  principal_id = azurerm_user_assigned_identity.batch.principal_id
+  scope                = data.azurerm_subscription.current.id
+  principal_id         = azurerm_user_assigned_identity.batch.principal_id
   role_definition_name = "Storage Blob Data Contributor"
 }
 
@@ -45,30 +45,30 @@ resource "azurerm_role_assignment" "batch_to_storage" {
 ####################################################
 
 resource "azuread_application" "batch" {
-  description = "Covalent Azure Batch Plugin"
+  description  = "Covalent Azure Batch Plugin"
   display_name = "CovalentBatchPlugin"
-  owners = var.owners
+  owners       = var.owners
 }
 
 resource "azuread_service_principal" "batch" {
   application_id = azuread_application.batch.application_id
-  owners = var.owners
+  owners         = var.owners
 }
 
 resource "azurerm_role_assignment" "covalent_plugin_storage" {
-  scope = data.azurerm_subscription.current.id
-  principal_id = azuread_service_principal.batch.object_id
+  scope                = data.azurerm_subscription.current.id
+  principal_id         = azuread_service_principal.batch.object_id
   role_definition_name = "Storage Blob Data Contributor"
 }
 
 resource "azuread_service_principal_password" "covalent_plugin" {
-  end_date_relative = "672h" # 28 days
+  end_date_relative    = "672h" # 28 days
   service_principal_id = azuread_service_principal.batch.object_id
 }
 
 resource "azurerm_role_definition" "covalent_batch" {
-  name = "${var.prefix}covalentbatch"
-  scope = data.azurerm_subscription.current.id
+  name        = "${var.prefix}covalentbatch"
+  scope       = data.azurerm_subscription.current.id
   description = "Covalent Azure Batch Permissions"
   permissions {
     actions = [
@@ -79,7 +79,7 @@ resource "azurerm_role_definition" "covalent_batch" {
 }
 
 resource "azurerm_role_assignment" "covalent_plugin_batch" {
-  scope = data.azurerm_subscription.current.id
-  principal_id = azuread_service_principal.batch.object_id
+  scope                = data.azurerm_subscription.current.id
+  principal_id         = azuread_service_principal.batch.object_id
   role_definition_name = azurerm_role_definition.covalent_batch.name
 }

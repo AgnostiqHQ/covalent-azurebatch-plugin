@@ -45,7 +45,7 @@ resource "azurerm_storage_account" "batch" {
 }
 
 resource "azurerm_storage_container" "assets" {
-  name = "covalent-assets"
-  storage_account_name = azurerm_storage_account.batch.name
+  name                  = "covalent-assets"
+  storage_account_name  = azurerm_storage_account.batch.name
   container_access_type = "private"
 }

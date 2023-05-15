@@ -22,5 +22,5 @@ variable "subscription_id" {
 
 variable "owners" {
   description = "List of owner IDs for the service principal credentials"
-  type = list(string)
+  type        = list(string)
 }

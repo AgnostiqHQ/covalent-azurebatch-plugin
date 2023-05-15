@@ -11,7 +11,7 @@ output "plugin_client_username" {
 }
 
 output "plugin_client_secret" {
-  value = azuread_service_principal_password.covalent_plugin.value
+  value     = azuread_service_principal_password.covalent_plugin.value
   sensitive = true
 }
 
