@@ -60,11 +60,11 @@ EXECUTOR_PLUGIN_NAME = "AzureBatchExecutor"
 FUNC_FILENAME = "func-{dispatch_id}-{node_id}.pkl"
 RESULT_FILENAME = "result-{dispatch_id}-{node_id}.pkl"
 STORAGE_CONTAINER_NAME = (
-    "covalent-pickles"  # TODO - Change to dispatch / node id dependent name after
+    "covalent-assets"
 )
 JOB_NAME = "covalent-batch-{dispatch_id}-{node_id}"
 COVALENT_EXEC_BASE_URI = os.getenv(
-    "COVALENT_EXEC_BASE_URI", "covalentbatch.azurecr.io/covalent-azurebatch-executor:latest"
+    "COVALENT_AZURE_BASE_IMAGE_URI", "covalent.azurecr.io/covalent-executor-base:latest"
 )
 
 
@@ -256,7 +256,10 @@ class AzureBatchExecutor(RemoteExecutor):
         self._debug_log(f"Node id: {node_id}")
         self._debug_log(f"Job id, task_id: {job_id, task_id}")
 
-        task_container_settings = models.TaskContainerSettings(image_name=COVALENT_EXEC_BASE_URI)
+        task_container_settings = models.TaskContainerSettings(
+            image_name=COVALENT_EXEC_BASE_URI,
+            container_run_options='--rm --workdir /covalent -u 0',
+        )
 
         constraints = models.TaskConstraints(
             max_wall_clock_time=timedelta(seconds=self.time_limit),
