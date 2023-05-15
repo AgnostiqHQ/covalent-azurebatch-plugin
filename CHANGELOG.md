@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Added
+
+- Terraform scripts to deploy and use these resources
+
+### Fixed
+
+- PipDeps now work
+
 ## [0.11.0] - 2022-12-14
 
 ### Changed

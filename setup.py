@@ -25,8 +25,6 @@ from setuptools import find_packages, setup
 
 site.ENABLE_USER_SITE = "--user" in sys.argv[1:]
 
-# When updating, VERSION should be set to that of the latest
-# covalent-executor-template (ie, this package).
 with open("VERSION") as f:
     version = f.read().strip()
 
@@ -46,13 +44,13 @@ setup_info = {
     "license": "GNU Affero GPL v3.0",
     "author": "Agnostiq",
     "author_email": "support@agnostiq.ai",
-    "description": "Covalent Microsoft Azure Batch Plugin",
+    "description": "Covalent Azure Batch Plugin",
     "long_description": open("README.md").read(),
     "long_description_content_type": "text/markdown",
     "include_package_data": True,
     "install_requires": required,
     "classifiers": [
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Environment :: Console",
         "Environment :: Plugins",
         "Intended Audience :: Developers",
