@@ -44,3 +44,8 @@ variable "owners" {
   description = "List of owner IDs for the service principal credentials"
   type        = list(string)
 }
+
+variable "vm_name" {
+  description = "Name of the VM used in the Batch pool"
+  default     = "Standard_A1_v2"
+}

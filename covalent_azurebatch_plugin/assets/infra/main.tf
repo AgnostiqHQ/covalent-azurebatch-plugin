@@ -29,8 +29,6 @@ provider "azurerm" {
   }
 }
 
-data "azurerm_subscription" "current" {}
-
 resource "azurerm_resource_group" "batch" {
   name     = "${var.prefix}-covalent-batch"
   location = var.region
@@ -52,7 +50,7 @@ resource "azurerm_batch_pool" "covalent" {
   account_name = azurerm_batch_account.covalent.name
   display_name = "Covalent Azure Plugin Default Pool"
 
-  vm_size           = "Standard_A1_v2"
+  vm_size           = var.vm_name
   node_agent_sku_id = "batch.node.ubuntu 20.04"
 
   auto_scale {
