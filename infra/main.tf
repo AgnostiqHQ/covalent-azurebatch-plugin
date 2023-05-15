@@ -17,7 +17,7 @@ resource "azurerm_resource_group" "batch" {
 }
 
 resource "azurerm_container_registry" "batch" {
-  name                = "${var.prefix}-covalentbatch"
+  name                = "${var.prefix}covalentbatch"
   resource_group_name = azurerm_resource_group.batch.name
   location            = azurerm_resource_group.batch.location
 
