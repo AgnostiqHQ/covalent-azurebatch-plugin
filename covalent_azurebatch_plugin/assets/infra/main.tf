@@ -58,7 +58,7 @@ resource "azurerm_batch_pool" "covalent" {
 
     formula = <<EOF
       startingNumberOfVMs = 0;
-      minNumberofVMs = 0;
+      minNumberofVMs = 1;
       maxNumberofVMs = 25;
       pendingTaskSamplePercent = $PendingTasks.GetSamplePercent(180 * TimeInterval_Second);
       pendingTaskSamples = pendingTaskSamplePercent < 70 ? startingNumberOfVMs : avg($PendingTasks.GetSample(180 *   TimeInterval_Second));

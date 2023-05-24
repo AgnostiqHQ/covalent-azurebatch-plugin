@@ -202,6 +202,9 @@ class AzureBatchExecutor(RemoteExecutor):
         self._debug_log(f"Polling task with job id: {job_id}")
         await self._poll_task(job_id)
 
+        self._debug_log("Terminating job...")
+        await self._terminate_job(job_id)
+
         self._debug_log("Querying result...")
         return await self.query_result(task_metadata)
 
@@ -338,6 +341,18 @@ class AzureBatchExecutor(RemoteExecutor):
 
         if exit_code != 0:
             raise BatchTaskFailedException(exit_code)
+
+    async def _terminate_job(self, job_id: str) -> None:
+        """Mark job as completed."""
+
+        batch_client = self._get_batch_service_client()
+        partial_func = partial(
+            batch_client.job.terminate, 
+            job_id=job_id,
+            terminate_reason="Completed",
+        )
+
+        await _execute_partial_in_threadpool(partial_func)
 
     async def cancel(self, job_id: str, reason: str = None) -> None:
         """Cancel an Azure Batch task."""

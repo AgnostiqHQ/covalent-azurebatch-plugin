@@ -57,7 +57,7 @@ resource "azuread_service_principal" "batch" {
 
 resource "azurerm_role_assignment" "covalent_plugin_storage" {
   scope                = "/subscriptions/${var.subscription_id}"
-  principal_id         = azuread_service_principal.batch.object_id
+  principal_id         = azuread_service_principal.batch.id
   role_definition_name = "Storage Blob Data Contributor"
 }
 
@@ -80,6 +80,6 @@ resource "azurerm_role_definition" "covalent_batch" {
 
 resource "azurerm_role_assignment" "covalent_plugin_batch" {
   scope                = "/subscriptions/${var.subscription_id}"
-  principal_id         = azuread_service_principal.batch.object_id
+  principal_id         = azuread_service_principal.batch.id
   role_definition_name = azurerm_role_definition.covalent_batch.name
 }
