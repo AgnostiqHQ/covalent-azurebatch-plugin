@@ -48,7 +48,9 @@ _EXECUTOR_PLUGIN_DEFAULTS = {
     "batch_account_domain": "batch.core.windows.net",
     "storage_account_name": "",
     "storage_account_domain": "blob.core.windows.net",
-    "base_image_uri": os.environ.get("COVALENT_AZURE_BASE_IMAGE_URI", "covalent.azurecr.io/covalent-executor-base:latest"),
+    "base_image_uri": os.environ.get(
+        "COVALENT_AZURE_BASE_IMAGE_URI", "covalent.azurecr.io/covalent-executor-base:latest"
+    ),
     "pool_id": "",
     "retries": 3,
     "time_limit": 300,
@@ -60,9 +62,7 @@ EXECUTOR_PLUGIN_NAME = "AzureBatchExecutor"
 
 FUNC_FILENAME = "func-{dispatch_id}-{node_id}.pkl"
 RESULT_FILENAME = "result-{dispatch_id}-{node_id}.pkl"
-STORAGE_CONTAINER_NAME = (
-    "covalent-assets"
-)
+STORAGE_CONTAINER_NAME = "covalent-assets"
 JOB_NAME = "covalent-batch-{dispatch_id}-{node_id}"
 
 
@@ -262,7 +262,7 @@ class AzureBatchExecutor(RemoteExecutor):
 
         task_container_settings = models.TaskContainerSettings(
             image_name=self.base_image_uri,
-            container_run_options='--rm --workdir /covalent -u 0',
+            container_run_options="--rm --workdir /covalent -u 0",
         )
 
         constraints = models.TaskConstraints(
@@ -348,7 +348,7 @@ class AzureBatchExecutor(RemoteExecutor):
 
         batch_client = self._get_batch_service_client()
         partial_func = partial(
-            batch_client.job.terminate, 
+            batch_client.job.terminate,
             job_id=job_id,
             terminate_reason="Completed",
         )

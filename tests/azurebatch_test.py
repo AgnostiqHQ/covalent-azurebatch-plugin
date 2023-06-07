@@ -39,7 +39,6 @@ from covalent_azurebatch_plugin.exceptions import BatchTaskFailedException, NoBa
 
 
 class TestAzureBatchExecutor:
-
     MOCK_TENANT_ID = "mock-tenant-id"
     MOCK_CLIENT_ID = "mock-client-id"
     MOCK_CLIENT_SECRET = "mock-client-secret"
@@ -468,7 +467,7 @@ class TestAzureBatchExecutor:
         await mock_executor.submit_task(self.MOCK_TASK_METADATA)
         models_mock.TaskContainerSettings.assert_called_once_with(
             image_name=self.MOCK_BASE_IMAGE_URI,
-            container_run_options='--rm --workdir /covalent -u 0',
+            container_run_options="--rm --workdir /covalent -u 0",
         )
         models_mock.TaskConstraints.assert_called_once_with(
             max_wall_clock_time=timedelta(seconds=self.MOCK_TIME_LIMIT),
