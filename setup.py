@@ -36,7 +36,7 @@ plugins_list = ["azurebatch = covalent_azurebatch_plugin.azurebatch"]
 
 setup_info = {
     "name": "covalent-azurebatch-plugin",
-    "packages": find_packages("."),
+    "packages": find_packages(exclude=["tests"]),
     "version": version,
     "maintainer": "Agnostiq",
     "url": "https://github.com/AgnostiqHQ/covalent-azurebatch-plugin",
