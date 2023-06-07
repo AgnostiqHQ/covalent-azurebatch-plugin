@@ -23,8 +23,6 @@ pip install covalent-azurebatch-plugin
 
 This is an example of how a workflow can be constructed to use the Azure Batch executor. In the example, we train a Support Vector Machine (SVM) and use an instance of the executor to execute the `train_svm` electron. Note that we also require [DepsPip](https://covalent.readthedocs.io/en/latest/concepts/concepts.html#depspip) which will be required to execute the electrons.
 
-Note that currently at the present moment DepsPip is not supported for the Azure Batch Executor.
-
 ```python
 from numpy.random import permutation
 from sklearn import svm, datasets
@@ -44,6 +42,7 @@ executor = AzureBatchExecutor(
     batch_account_domain="batch.core.windows.net",
     storage_account_name="covalentbatch",
     storage_account_domain="blob.core.windows.net",
+    base_image_uri="covalent.azurecr.io/covalent-executor-base:latest",
     pool_id="covalent-pool",
     retries=3,
     time_limit=300,
@@ -129,11 +128,9 @@ The required Azure resources are:
 
     3. Resource group
 
-    4. Container registry
+    4. Container registry (custom images only)
 
-    5. Virtual network
-
-    6. Pool of compute nodes
+    5. Pool of compute nodes
 
 
 For more information regarding which cloud resources need to be provisioned visit our [read the docs (RTD) guide](https://covalent.readthedocs.io/en/latest/api/executors/azurebatch.html#required-cloud-resources) for this plugin.
@@ -144,7 +141,7 @@ For more information on how to get started with Covalent, check out the project 
 
 ## Release Notes
 
-Release notes are available in the [Changelog](https://github.com/AgnostiqHQ/covalent-executor-template/blob/main/CHANGELOG.md).
+Release notes are available in the [Changelog](https://github.com/AgnostiqHQ/covalent-azurebatch-plugin/blob/main/CHANGELOG.md).
 
 ## Citation
 
@@ -155,4 +152,4 @@ Please use the following citation in any publications:
 
 ## License
 
-Covalent is licensed under the GNU Affero GPL 3.0 License. Covalent may be distributed under other licenses upon request. See the [LICENSE](https://github.com/AgnostiqHQ/covalent-executor-template/blob/main/LICENSE) file or contact the [support team](mailto:support@agnostiq.ai) for more details.
+Covalent is licensed under the GNU Affero GPL 3.0 License. Covalent may be distributed under other licenses upon request. See the [LICENSE](https://github.com/AgnostiqHQ/covalent-azurebatch-plugin/blob/main/LICENSE) file or contact the [support team](mailto:support@agnostiq.ai) for more details.

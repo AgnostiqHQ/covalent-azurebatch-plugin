@@ -68,7 +68,10 @@ def test_execution_exceptions(mocker, env_dict, tmp_path: Path):
     mocker.patch.dict(os.environ, **env_dict)
 
     with pytest.raises(ValueError):
-        import covalent_azurebatch_plugin.exec
+        import covalent_azurebatch_plugin
+
+        sys.path.append(os.path.dirname(covalent_azurebatch_plugin.__file__) + "/assets/infra")
+        import exec
 
 
 def test_execution(mocker, tmp_path: Path):
@@ -105,7 +108,10 @@ def test_execution(mocker, tmp_path: Path):
     with open(str(tmp_function_pickle_file), "rb") as f:
         container_client_mock.download_blob().readall.return_value = f.read()
 
-    import covalent_azurebatch_plugin.exec
+    import covalent_azurebatch_plugin
+
+    sys.path.append(os.path.dirname(covalent_azurebatch_plugin.__file__) + "/assets/infra")
+    import exec
 
     container_client_mock.download_blob().readall.assert_called_once()
     container_client_mock.download_blob.assert_any_call(MOCK_COVALENT_TASK_FUNC_FILENAME)

@@ -21,21 +21,23 @@
 ARG COVALENT_BASE_IMAGE
 FROM ${COVALENT_BASE_IMAGE}
 
-WORKDIR /covalent
+USER root
 
 RUN apt-get update && apt-get install -y \
   && rm -rf /var/lib/apt/lists/* \
-  && pip install --no-cache-dir --use-feature=in-tree-build --upgrade \
+  && pip install --no-cache-dir --upgrade \
   azure-batch==12.0.0 \
   azure-identity==1.11.0 \
   azure-storage-blob==12.14.1 \
   "covalent>=0.202.0,<1"
 
+WORKDIR /covalent
+
 ENV XDG_CONFIG_DIR=/mnt/batch/tasks
 ENV XDG_CACHE_HOME=/mnt/batch/tasks
 ENV XDG_DATA_HOME=/mnt/batch/tasks
 
-COPY covalent_azurebatch_plugin/exec.py /covalent
+COPY exec.py /covalent
 
 ENTRYPOINT [ "python" ]
 CMD [ "/covalent/exec.py" ]

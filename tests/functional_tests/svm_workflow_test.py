@@ -25,10 +25,8 @@ import pytest
 deps_pip = ct.DepsPip(packages=["numpy==1.22.4", "scikit-learn==1.1.2"])
 
 
-@pytest.mark.skip(reason="Pip deps does not work currently.")
 @pytest.mark.functional_tests
 def test_basic_workflow():
-
     from numpy.random import permutation
     from sklearn import datasets, svm
 
