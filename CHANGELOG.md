@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## [0.12.0] - 2023-06-07
+
 ### Added
 
 - Terraform scripts to deploy and use these resources
