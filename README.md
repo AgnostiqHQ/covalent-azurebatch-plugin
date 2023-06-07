@@ -54,7 +54,7 @@ executor = AzureBatchExecutor(
 # Use executor plugin to train our SVM model
 @ct.electron(
     executor=executor,
-    # deps_pip=deps_pip
+    deps_pip=deps_pip
 )
 def train_svm(data, C, gamma):
     X, y = data
