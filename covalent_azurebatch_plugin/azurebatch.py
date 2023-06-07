@@ -46,13 +46,14 @@ _EXECUTOR_PLUGIN_DEFAULTS = {
     "client_secret": "",
     "batch_account_url": "",
     "batch_account_domain": "batch.core.windows.net",
-    "storage_account_name": "covalentbatch",  # TODO - Change default to empty string after
+    "storage_account_name": "",
     "storage_account_domain": "blob.core.windows.net",
+    "base_image_uri": os.environ.get("COVALENT_AZURE_BASE_IMAGE_URI", "covalent.azurecr.io/covalent-executor-base:latest"),
     "pool_id": "",
     "retries": 3,
     "time_limit": 300,
     "cache_dir": "/tmp/covalent",
-    "poll_freq": 10,
+    "poll_freq": 30,
 }
 
 EXECUTOR_PLUGIN_NAME = "AzureBatchExecutor"
@@ -63,9 +64,6 @@ STORAGE_CONTAINER_NAME = (
     "covalent-assets"
 )
 JOB_NAME = "covalent-batch-{dispatch_id}-{node_id}"
-COVALENT_EXEC_BASE_URI = os.getenv(
-    "COVALENT_AZURE_BASE_IMAGE_URI", "covalent.azurecr.io/covalent-executor-base:latest"
-)
 
 
 class AzureBatchExecutor(RemoteExecutor):
@@ -80,6 +78,7 @@ class AzureBatchExecutor(RemoteExecutor):
         batch_account_domain: str = None,
         storage_account_name: str = None,
         storage_account_domain: str = None,
+        base_image_uri: str = None,
         pool_id: str = None,
         retries: int = None,
         time_limit: float = None,  # Time in seconds
@@ -105,6 +104,7 @@ class AzureBatchExecutor(RemoteExecutor):
         self.storage_account_domain = storage_account_domain or get_config(
             "executors.azurebatch.storage_account_domain"
         )
+        self.base_image_uri = base_image_uri or get_config("executors.azurebatch.base_image_uri")
         self.pool_id = pool_id or get_config("executors.azurebatch.pool_id")
         self.retries = retries or get_config("executors.azurebatch.retries")
         self.time_limit = time_limit or get_config("executors.azurebatch.time_limit")
@@ -119,6 +119,7 @@ class AzureBatchExecutor(RemoteExecutor):
             "batch_account_domain": self.batch_account_domain,
             "storage_account_name": self.storage_account_name,
             "storage_account_domain": self.storage_account_domain,
+            "base_image_uri": self.base_image_uri,
             "pool_id": self.pool_id,
             "retries": self.retries,
             "time_limit": self.time_limit,
@@ -260,7 +261,7 @@ class AzureBatchExecutor(RemoteExecutor):
         self._debug_log(f"Job id, task_id: {job_id, task_id}")
 
         task_container_settings = models.TaskContainerSettings(
-            image_name=COVALENT_EXEC_BASE_URI,
+            image_name=self.base_image_uri,
             container_run_options='--rm --workdir /covalent -u 0',
         )
 

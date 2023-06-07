@@ -29,7 +29,6 @@ import pytest
 from azure.batch import models
 
 from covalent_azurebatch_plugin.azurebatch import (
-    COVALENT_EXEC_BASE_URI,
     FUNC_FILENAME,
     JOB_NAME,
     RESULT_FILENAME,
@@ -48,6 +47,7 @@ class TestAzureBatchExecutor:
     MOCK_BATCH_ACCOUNT_DOMAIN = "mock-batch-account-domain"
     MOCK_STORAGE_ACCOUNT_NAME = "mock-storage-account-name"
     MOCK_STORAGE_ACCOUNT_DOMAIN = "mock-storage-account-domain"
+    MOCK_BASE_IMAGE_URI = "mock-base-image-uri"
     MOCK_POOL_ID = "mock-pool-id"
     MOCK_RETRIES = 2
     MOCK_TIME_LIMIT = 3
@@ -69,6 +69,7 @@ class TestAzureBatchExecutor:
             "batch_account_domain": self.MOCK_BATCH_ACCOUNT_DOMAIN,
             "storage_account_name": self.MOCK_STORAGE_ACCOUNT_NAME,
             "storage_account_domain": self.MOCK_STORAGE_ACCOUNT_DOMAIN,
+            "base_image_uri": self.MOCK_BASE_IMAGE_URI,
             "pool_id": self.MOCK_POOL_ID,
             "retries": self.MOCK_RETRIES,
             "time_limit": self.MOCK_TIME_LIMIT,
@@ -203,6 +204,9 @@ class TestAzureBatchExecutor:
         poll_task_mock = mocker.patch(
             "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._poll_task"
         )
+        terminate_mock = mocker.patch(
+            "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor._terminate_job"
+        )
         query_result_mock = mocker.patch(
             "covalent_azurebatch_plugin.azurebatch.AzureBatchExecutor.query_result",
             return_value="MOCK_RESULT",
@@ -221,6 +225,7 @@ class TestAzureBatchExecutor:
         )
         submit_task_mock.assert_called_once_with(self.MOCK_TASK_METADATA)
         poll_task_mock.assert_called_once_with(self.MOCK_JOB_ID)
+        terminate_mock.assert_called_once_with(self.MOCK_JOB_ID)
         query_result_mock.assert_called_once_with(self.MOCK_TASK_METADATA)
 
     @pytest.mark.parametrize(
@@ -462,7 +467,8 @@ class TestAzureBatchExecutor:
         )
         await mock_executor.submit_task(self.MOCK_TASK_METADATA)
         models_mock.TaskContainerSettings.assert_called_once_with(
-            image_name=COVALENT_EXEC_BASE_URI
+            image_name=self.MOCK_BASE_IMAGE_URI,
+            container_run_options='--rm --workdir /covalent -u 0',
         )
         models_mock.TaskConstraints.assert_called_once_with(
             max_wall_clock_time=timedelta(seconds=self.MOCK_TIME_LIMIT),
@@ -472,7 +478,7 @@ class TestAzureBatchExecutor:
             mocker.call(name="COVALENT_TASK_FUNC_FILENAME", value="func-mock-dispatch-id-1.pkl"),
             mocker.call(name="COVALENT_RESULT_FILENAME", value="result-mock-dispatch-id-1.pkl"),
             mocker.call(name="AZURE_BLOB_STORAGE_ACCOUNT", value="mock-storage-account-name"),
-            mocker.call(name="AZURE_BLOB_STORAGE_CONTAINER", value="covalent-pickles"),
+            mocker.call(name="AZURE_BLOB_STORAGE_CONTAINER", value="covalent-assets"),
             mocker.call(
                 name="AZURE_BLOB_STORAGE_ACCOUNT_DOMAIN", value="mock-storage-account-domain"
             ),

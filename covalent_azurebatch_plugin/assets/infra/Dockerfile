@@ -25,7 +25,7 @@ USER root
 
 RUN apt-get update && apt-get install -y \
   && rm -rf /var/lib/apt/lists/* \
-  && pip install --no-cache-dir --use-feature=in-tree-build --upgrade \
+  && pip install --no-cache-dir --upgrade \
   azure-batch==12.0.0 \
   azure-identity==1.11.0 \
   azure-storage-blob==12.14.1 \
