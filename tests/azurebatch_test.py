@@ -436,7 +436,8 @@ class TestAzureBatchExecutor:
         job_id = JOB_NAME.format(dispatch_id=self.MOCK_DISPATCH_ID, node_id=self.MOCK_NODE_ID)
         await mock_executor._terminate_job(job_id)
         batch_service_client_mock().job.terminate.assert_called_once_with(
-            job_id=job_id, terminate_reason="Completed",
+            job_id=job_id,
+            terminate_reason="Completed",
         )
 
     @pytest.mark.asyncio
