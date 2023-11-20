@@ -47,8 +47,8 @@ resource "azuread_application" "batch" {
 }
 
 resource "azuread_service_principal" "batch" {
-  application_id = azuread_application.batch.application_id
-  owners         = var.owners
+  client_id = azuread_application.batch.client_id
+  owners    = var.owners
 }
 
 resource "azurerm_role_assignment" "covalent_plugin_storage" {

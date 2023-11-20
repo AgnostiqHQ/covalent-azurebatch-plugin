@@ -22,9 +22,10 @@ import tempfile
 from datetime import timedelta
 from functools import partial
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import cloudpickle as pickle
+from pydantic import BaseModel
 from azure.batch import BatchServiceClient, models
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.identity import ClientSecretCredential
@@ -36,23 +37,50 @@ from covalent.executor.executor_plugins.remote_executor import RemoteExecutor
 from .exceptions import BatchTaskFailedException, NoBatchTasksException
 from .utils import _execute_partial_in_threadpool, _load_pickle_file
 
-_EXECUTOR_PLUGIN_DEFAULTS = {
-    "tenant_id": "",
-    "client_id": "",
-    "client_secret": "",
-    "batch_account_url": "",
-    "batch_account_domain": "batch.core.windows.net",
-    "storage_account_name": "",
-    "storage_account_domain": "blob.core.windows.net",
-    "base_image_uri": os.environ.get(
+
+class ExecutorPluginDefaults(BaseModel):
+    """
+    Default configuration values for the executor
+    """
+
+    tenant_id: str = ""
+    client_id: str = ""
+    client_secret: str = ""
+    batch_account_url: str = ""
+    batch_account_domain: str = "batch.core.windows.net"
+    storage_account_name: str = ""
+    storage_account_domain: str = "blob.core.windows.net"
+    base_image_uri: str = os.environ.get(
         "COVALENT_AZURE_BASE_IMAGE_URI", "covalent.azurecr.io/covalent-executor-base:latest"
-    ),
-    "pool_id": "",
-    "retries": 3,
-    "time_limit": 300,
-    "cache_dir": "/tmp/covalent",
-    "poll_freq": 30,
-}
+    )
+    pool_id: str = ""
+    retries: int = 3
+    time_limit: int = 300
+    cache_dir: str = "/tmp/covalent"
+    poll_freq: int = 30
+
+class ExecutorInfraDefaults(BaseModel):
+    """
+    Configuration values for provisioning Azure Batch cloud infrastructure
+    """
+
+    prefix: Optional[str] = "covalent-batch"
+    tenant_id: str = ""
+    client_id: str = ""
+    client_secret: str = ""
+    batch_account_url: str = ""
+    batch_account_domain: str = "batch.core.windows.net"
+    storage_account_name: str = ""
+    storage_account_domain: str = "blob.core.windows.net"
+    base_image_uri: str = os.environ.get(
+        "COVALENT_AZURE_BASE_IMAGE_URI", "covalent.azurecr.io/covalent-executor-base:latest"
+    )
+    pool_id: str = ""
+    retries: int = 3
+    time_limit: int = 300
+    cache_dir: str = "/tmp/covalent"
+    poll_freq: int = 30
+
 
 EXECUTOR_PLUGIN_NAME = "AzureBatchExecutor"
 
