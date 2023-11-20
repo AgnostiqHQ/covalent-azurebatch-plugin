@@ -25,7 +25,6 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import cloudpickle as pickle
-from pydantic import BaseModel
 from azure.batch import BatchServiceClient, models
 from azure.common.credentials import ServicePrincipalCredentials
 from azure.identity import ClientSecretCredential
@@ -33,6 +32,7 @@ from azure.storage.blob import BlobServiceClient
 from covalent._shared_files.config import get_config
 from covalent._shared_files.logger import app_log
 from covalent.executor.executor_plugins.remote_executor import RemoteExecutor
+from pydantic import BaseModel
 
 from .exceptions import BatchTaskFailedException, NoBatchTasksException
 from .utils import _execute_partial_in_threadpool, _load_pickle_file
@@ -58,6 +58,7 @@ class ExecutorPluginDefaults(BaseModel):
     time_limit: int = 300
     cache_dir: str = "/tmp/covalent"
     poll_freq: int = 30
+
 
 class ExecutorInfraDefaults(BaseModel):
     """
