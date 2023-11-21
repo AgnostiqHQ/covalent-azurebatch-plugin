@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Changed
+
+- Changed `application_id` to `client_id` since `application_id` is being deprecated
+- Changed `plugin_defaults` & `infra_defaults` to pydantic models
+
+### Added
+
+- Added tftpl file for generating conf file
+- Added script in the main.tf for conf template
+
 ## [0.15.0] - 2023-11-21
 
 ### Changed

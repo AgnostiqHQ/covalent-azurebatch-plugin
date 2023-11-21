@@ -84,3 +84,24 @@ EOF
     identity_ids = [azurerm_user_assigned_identity.batch.id]
   }
 }
+
+data "template_file" "executor_config" {
+  template = file("${path.module}/azurebatch.conf.tftpl")
+
+  vars = {
+    subscription_id        = var.subscription_id
+    tenant_id              = var.tenant_id
+    client_id              = "${azuread_application.batch.application_id}"
+    batch_account_url      = "https://${azurerm_batch_account.covalent.account_endpoint}"
+    batch_account_domain   = "batch.core.windows.net"
+    storage_account_name   = "${azurerm_storage_account.batch.name}"
+    storage_account_domain = "blob.core.windows.net"
+    pool_id                = "${azurerm_batch_pool.covalent.name}"
+    retries                = 3
+  }
+}
+
+resource "local_file" "executor_config" {
+  content  = data.template_file.executor_config.rendered
+  filename = "${path.module}/azurebatch.conf"
+}

@@ -15,6 +15,7 @@
 # limitations under the License.
 
 variable "prefix" {
+  default     = "covalent"
   description = "Unique prefix for a deployment"
 }
 
