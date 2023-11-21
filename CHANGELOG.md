@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## [0.16.0] - 2023-11-21
+
 ### Changed
 
 - Changed `application_id` to `client_id` since `application_id` is being deprecated
