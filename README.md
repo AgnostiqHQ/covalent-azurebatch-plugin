@@ -2,10 +2,9 @@
 
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/AgnostiqHQ/covalent/master/doc/source/_static/covalent_readme_banner.svg" width=150%>
+<img src="assets/azure_batch_readme_banner.svg" width=150%>
 
 </div>
-
 
 ## Covalent Azure Batch Plugin
 
@@ -102,6 +101,7 @@ result = ct.get_result(dispatch_id, wait=True).result
 
 print(result)
 ```
+
 During the execution of the workflow, one can navigate to the UI to see the status of the workflow. Once completed, the above script should also output a value with the score of our model.
 
 ```sh
@@ -132,7 +132,6 @@ The required Azure resources are:
 
     5. Pool of compute nodes
 
-
 For more information regarding which cloud resources need to be provisioned visit our [read the docs (RTD) guide](https://covalent.readthedocs.io/en/latest/api/executors/azurebatch.html#required-cloud-resources) for this plugin.
 
 ## Getting Started with Covalent
@@ -148,7 +147,7 @@ Release notes are available in the [Changelog](https://github.com/AgnostiqHQ/cov
 Please use the following citation in any publications:
 
 > W. J. Cunningham, S. K. Radha, F. Hasan, J. Kanem, S. W. Neagle, and S. Sanand.
-> *Covalent.* Zenodo, 2022. https://doi.org/10.5281/zenodo.5903364
+> _Covalent._ Zenodo, 2022. https://doi.org/10.5281/zenodo.5903364
 
 ## License
 

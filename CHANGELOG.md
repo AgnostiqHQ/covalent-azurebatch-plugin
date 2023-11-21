@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Changed
+
+- Changed the README.md banner from default covalent jpg to azure batch's svg file
+
 ## [0.14.0] - 2023-09-21
 
 ### Changed
