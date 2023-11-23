@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Changed
+
+- Required terraform version to ">= 1.6"
+- Use `templatefile` instead of `data "template_file` ...
+
 ## [0.16.0] - 2023-11-21
 
 ### Changed
