@@ -85,10 +85,9 @@ EOF
   }
 }
 
-data "template_file" "executor_config" {
-  template = file("${path.module}/azurebatch.conf.tftpl")
-
-  vars = {
+resource "local_file" "executor_config" {
+  filename = "${path.module}/azurebatch.conf"
+  content = templatefile("${path.module}/azurebatch.conf.tftpl", {
     subscription_id        = var.subscription_id
     tenant_id              = var.tenant_id
     client_id              = "${azuread_application.batch.application_id}"
@@ -98,10 +97,5 @@ data "template_file" "executor_config" {
     storage_account_domain = "blob.core.windows.net"
     pool_id                = "${azurerm_batch_pool.covalent.name}"
     retries                = 3
-  }
-}
-
-resource "local_file" "executor_config" {
-  content  = data.template_file.executor_config.rendered
-  filename = "${path.module}/azurebatch.conf"
+  })
 }
