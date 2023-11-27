@@ -66,6 +66,8 @@ class ExecutorInfraDefaults(BaseModel):
     """
 
     prefix: Optional[str] = "covalent-batch"
+    subscription_id: str = ""
+    owners: List[str] = []
     tenant_id: str = ""
     client_id: str = ""
     client_secret: str = ""
