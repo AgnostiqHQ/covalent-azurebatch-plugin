@@ -18,6 +18,9 @@
 # User-managed identity assumed by Batch
 #########################################
 
+data "azuread_client_config" "current" {}
+
+
 resource "azurerm_user_assigned_identity" "batch" {
   name                = "${var.prefix}covalentbatch"
   resource_group_name = azurerm_resource_group.batch.name
@@ -43,12 +46,12 @@ resource "azurerm_role_assignment" "batch_to_storage" {
 resource "azuread_application" "batch" {
   description  = "Covalent Azure Batch Plugin"
   display_name = "CovalentBatchPlugin"
-  owners       = var.owners
+  owners       = [data.azuread_client_config.current.object_id]
 }
 
 resource "azuread_service_principal" "batch" {
   application_id = azuread_application.batch.application_id
-  owners         = var.owners
+  owners         = [data.azuread_client_config.current.object_id]
 }
 
 resource "azurerm_role_assignment" "covalent_plugin_storage" {
