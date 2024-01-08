@@ -25,7 +25,7 @@ resource "azurerm_container_registry" "batch" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<EOL
       set -eu -o pipefail
-      docker build --build-arg COVALENT_BASE_IMAGE=python:3.8-slim-bullseye --tag ${self.login_server}/covalent-executor-base:latest .
+      docker build --build-arg COVALENT_BASE_IMAGE=python:3.8-slim-bullseye --build-arg COVALENT_PACKAGE_VERSION=${var.covalent_package_version} --tag ${self.login_server}/covalent-executor-base:latest .
       az acr login --name ${self.name}
       docker push -a ${self.login_server}/covalent-executor-base
     EOL

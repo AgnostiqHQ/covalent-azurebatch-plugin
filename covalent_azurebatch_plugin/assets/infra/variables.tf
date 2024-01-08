@@ -46,3 +46,9 @@ variable "vm_name" {
   description = "Name of the VM used in the Batch pool"
   default     = "Standard_A1_v2"
 }
+
+variable "covalent_package_version" {
+  type        = string
+  description = "Covalent version to be installed in the container, if not specified the latest stable version will be installed"
+  default     = ""
+}

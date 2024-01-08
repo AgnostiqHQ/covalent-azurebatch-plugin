@@ -17,6 +17,8 @@
 ARG COVALENT_BASE_IMAGE
 FROM ${COVALENT_BASE_IMAGE}
 
+ARG COVALENT_PACKAGE_VERSION
+
 USER root
 
 RUN apt-get update && apt-get install -y \
@@ -24,8 +26,16 @@ RUN apt-get update && apt-get install -y \
   && pip install --no-cache-dir --upgrade \
   azure-batch==12.0.0 \
   azure-identity==1.11.0 \
-  azure-storage-blob==12.14.1 \
-  "covalent>=0.202.0,<1"
+  azure-storage-blob==12.14.1
+
+
+RUN if [ -z "$COVALENT_PACKAGE_VERSION" ]; then \
+		pip install covalent; else \
+		pip install "covalent==$COVALENT_PACKAGE_VERSION"; \
+	fi
+
+# Making sure the right version of cloudpickle is installed after covalent
+RUN pip install "cloudpickle>2, <3"
 
 WORKDIR /covalent
 

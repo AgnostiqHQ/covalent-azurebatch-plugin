@@ -81,6 +81,7 @@ class ExecutorInfraDefaults(BaseModel):
     time_limit: int = 300
     cache_dir: str = "/tmp/covalent"
     poll_freq: int = 30
+    covalent_package_version: str = ""
 
 
 EXECUTOR_PLUGIN_NAME = "AzureBatchExecutor"
