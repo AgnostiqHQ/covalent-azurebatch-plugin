@@ -34,8 +34,6 @@ RUN if [ -z "$COVALENT_PACKAGE_VERSION" ]; then \
 		pip install "covalent==$COVALENT_PACKAGE_VERSION"; \
 	fi
 
-# Making sure the right version of cloudpickle is installed after covalent
-RUN pip install "cloudpickle>2, <3"
 
 WORKDIR /covalent
 
