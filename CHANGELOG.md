@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added `covalent_package_version` so that we can specify the version of the covalent to use when building the docker image
 
+### Fix
+
+- Added `subscription_id` & `owners` to ExecutorInfraDefaults to accept arguments from **deploy** command
+
+### Changed
+
+- Modified the `owners` variable to have a default value
+
 ## [0.16.0] - 2023-11-21
 
 ### Changed

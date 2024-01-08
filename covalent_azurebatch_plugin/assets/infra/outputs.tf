@@ -23,7 +23,7 @@ output "user_identity_resource_id" {
 }
 
 output "plugin_client_username" {
-  value = azuread_application.batch.application_id
+  value = azuread_application.batch.client_id
 }
 
 output "plugin_client_secret" {

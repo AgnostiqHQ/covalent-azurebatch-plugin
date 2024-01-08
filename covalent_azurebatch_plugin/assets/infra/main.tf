@@ -91,7 +91,7 @@ data "template_file" "executor_config" {
   vars = {
     subscription_id        = var.subscription_id
     tenant_id              = var.tenant_id
-    client_id              = "${azuread_application.batch.application_id}"
+    client_id              = "${azuread_application.batch.client_id}"
     batch_account_url      = "https://${azurerm_batch_account.covalent.account_endpoint}"
     batch_account_domain   = "batch.core.windows.net"
     storage_account_name   = "${azurerm_storage_account.batch.name}"
