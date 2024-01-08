@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Added
+
+- Added `covalent_package_version` so that we can specify the version of the covalent to use when building the docker image
+
 ## [0.16.0] - 2023-11-21
 
 ### Changed
