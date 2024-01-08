@@ -66,9 +66,9 @@ class ExecutorInfraDefaults(BaseModel):
     """
 
     prefix: Optional[str] = "covalent-batch"
-    subscription_id: str = ""
+    subscription_id: str
     owners: List[str] = []
-    tenant_id: str = ""
+    tenant_id: str
     client_id: str = ""
     client_secret: str = ""
     batch_account_url: str = ""
@@ -87,6 +87,8 @@ class ExecutorInfraDefaults(BaseModel):
 
 
 EXECUTOR_PLUGIN_NAME = "AzureBatchExecutor"
+
+_EXECUTOR_PLUGIN_DEFAULTS = ExecutorPluginDefaults().dict()
 
 FUNC_FILENAME = "func-{dispatch_id}-{node_id}.pkl"
 RESULT_FILENAME = "result-{dispatch_id}-{node_id}.pkl"

@@ -21,7 +21,7 @@ ARG COVALENT_PACKAGE_VERSION
 
 USER root
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install gcc -y \
   && rm -rf /var/lib/apt/lists/* \
   && pip install --no-cache-dir --upgrade \
   azure-batch==12.0.0 \
