@@ -84,6 +84,9 @@ class ExecutorInfraDefaults(BaseModel):
     cache_dir: str = "/tmp/covalent"
     poll_freq: int = 30
     covalent_package_version: str = ""
+    create_batch_account: bool = True
+    batch_account_name: str = ""
+    batch_resource_group: str = ""
 
 
 EXECUTOR_PLUGIN_NAME = "AzureBatchExecutor"

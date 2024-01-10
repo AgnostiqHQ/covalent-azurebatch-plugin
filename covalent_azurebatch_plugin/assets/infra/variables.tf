@@ -53,3 +53,21 @@ variable "covalent_package_version" {
   description = "Covalent version to be installed in the container, if not specified the latest stable version will be installed"
   default     = ""
 }
+
+variable "create_batch_account" {
+  type        = bool
+  description = "Whether to create a new Batch account or use an existing one"
+  default     = true
+}
+
+variable "batch_account_name" {
+  type        = string
+  description = "Name of the Batch account to be used"
+  default     = ""
+}
+
+variable "batch_resource_group" {
+  type        = string
+  description = "Name of the resource group containing the Batch account to be used"
+  default     = ""
+}
