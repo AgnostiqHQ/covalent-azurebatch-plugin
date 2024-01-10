@@ -106,6 +106,7 @@ data "template_file" "executor_config" {
     subscription_id        = var.subscription_id
     tenant_id              = var.tenant_id
     client_id              = "${azuread_application.batch.client_id}"
+    client_secret          = "${azuread_service_principal_password.covalent_plugin.value}"
     batch_account_url      = var.create_batch_account ? "https://${azurerm_batch_account.covalent[0].account_endpoint}" : "https://${data.azurerm_batch_account.covalent[0].account_endpoint}"
     batch_account_domain   = "batch.core.windows.net"
     storage_account_name   = "${azurerm_storage_account.batch.name}"
