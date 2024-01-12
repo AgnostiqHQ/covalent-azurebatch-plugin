@@ -26,9 +26,9 @@ provider "azurerm" {
 data "azurerm_client_config" "current" {}
 
 locals {
-  tenant_id = var.tenant_id != "" ? var.tenant_id : data.azurerm_client_config.current.tenant_id
+  tenant_id       = var.tenant_id != "" ? var.tenant_id : data.azurerm_client_config.current.tenant_id
   subscription_id = var.subscription_id != "" ? var.subscription_id : data.azurerm_client_config.current.subscription_id
-  owners = length(var.owners) > 0 ? var.owners : [data.azurerm_client_config.current.object_id]
+  owners          = length(var.owners) > 0 ? var.owners : [data.azurerm_client_config.current.object_id]
 }
 
 resource "azurerm_resource_group" "batch" {
@@ -91,10 +91,9 @@ EOF
   }
 }
 
-data "template_file" "executor_config" {
-  template = file("${path.module}/azurebatch.conf.tftpl")
-
-  vars = {
+resource "local_file" "executor_config" {
+  filename = "${path.module}/azurebatch.conf"
+  content = templatefile("${path.module}/azurebatch.conf.tftpl", {
     subscription_id        = "${local.subscription_id}"
     tenant_id              = "${local.tenant_id}"
     client_id              = "${data.azurerm_client_config.current.client_id}"
@@ -104,10 +103,5 @@ data "template_file" "executor_config" {
     storage_account_domain = "blob.core.windows.net"
     pool_id                = "${azurerm_batch_pool.covalent.name}"
     retries                = 3
-  }
-}
-
-resource "local_file" "executor_config" {
-  content  = data.template_file.executor_config.rendered
-  filename = "${path.module}/azurebatch.conf"
+  })
 }
