@@ -15,14 +15,20 @@
 # limitations under the License.
 
 provider "azurerm" {
-  tenant_id       = var.tenant_id
-  subscription_id = var.subscription_id
 
   features {
     resource_group {
       prevent_deletion_if_contains_resources = false
     }
   }
+}
+
+data "azurerm_client_config" "current" {}
+
+locals {
+  tenant_id = var.tenant_id != "" ? var.tenant_id : data.azurerm_client_config.current.tenant_id
+  subscription_id = var.subscription_id != "" ? var.subscription_id : data.azurerm_client_config.current.subscription_id
+  owners = length(var.owners) > 0 ? var.owners : [data.azurerm_client_config.current.object_id]
 }
 
 resource "azurerm_resource_group" "batch" {
@@ -89,9 +95,9 @@ data "template_file" "executor_config" {
   template = file("${path.module}/azurebatch.conf.tftpl")
 
   vars = {
-    subscription_id        = var.subscription_id
-    tenant_id              = var.tenant_id
-    client_id              = "${azuread_application.batch.application_id}"
+    subscription_id        = "${local.subscription_id}"
+    tenant_id              = "${local.tenant_id}"
+    client_id              = "${data.azurerm_client_config.current.client_id}"
     batch_account_url      = "https://${azurerm_batch_account.covalent.account_endpoint}"
     batch_account_domain   = "batch.core.windows.net"
     storage_account_name   = "${azurerm_storage_account.batch.name}"
