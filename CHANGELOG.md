@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `_EXECUTOR_PLUGIN_DEFAULTS` variable to populate Azure Batch plugin defaults in the `covalent` config file
 - Added `.gitignore` file in the `infra` directory to ignore more unnecessary files from being committed
 
-### Fix
+### Fixed
 
 - Added `subscription_id`, `owners`, `tenant_id`, to ExecutorInfraDefaults to accept arguments from the `covalent deploy` command
 - Fixed `pool_id` value in config file
