@@ -40,7 +40,7 @@ variable "subscription_id" {
 }
 
 variable "owners" {
-  default     = []
+  default     = null
   description = "List of owner IDs for the service principal credentials"
   type        = list(string)
 }
