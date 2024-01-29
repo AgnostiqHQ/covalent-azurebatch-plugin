@@ -43,7 +43,6 @@ variable "owners" {
   default     = []
   description = "List of owner IDs for the service principal credentials"
   type        = list(string)
-  default     = []
 }
 
 variable "vm_name" {
