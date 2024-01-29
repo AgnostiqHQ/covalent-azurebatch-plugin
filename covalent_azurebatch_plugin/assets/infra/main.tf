@@ -113,11 +113,5 @@ resource "local_file" "executor_config" {
     pool_id                = "${azurerm_batch_pool.covalent.name}"
     retries                = 3
     base_image_uri         = "${azurerm_container_registry.batch.login_server}/covalent-executor-base:latest"
-    }
-  )
-}
-
-resource "local_file" "executor_config" {
-  content  = data.template_file.executor_config.rendered
-  filename = "${path.module}/azurebatch.conf"
+  })
 }
