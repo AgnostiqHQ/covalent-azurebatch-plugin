@@ -65,9 +65,9 @@ class ExecutorInfraDefaults(BaseModel):
     Configuration values for provisioning Azure Batch cloud infrastructure
     """
 
-    prefix: Optional[str] = "covalent-batch"
+    prefix: Optional[str] = "covalent"
     subscription_id: str
-    owners: List[str] = []
+    owners: Optional[List[str]] = None
     tenant_id: str
     client_id: str = ""
     client_secret: str = ""
@@ -91,7 +91,7 @@ class ExecutorInfraDefaults(BaseModel):
 
 EXECUTOR_PLUGIN_NAME = "AzureBatchExecutor"
 
-_EXECUTOR_PLUGIN_DEFAULTS = ExecutorPluginDefaults().dict()
+_EXECUTOR_PLUGIN_DEFAULTS = ExecutorPluginDefaults().model_dump()
 
 FUNC_FILENAME = "func-{dispatch_id}-{node_id}.pkl"
 RESULT_FILENAME = "result-{dispatch_id}-{node_id}.pkl"
