@@ -32,7 +32,7 @@ locals {
 }
 
 resource "azurerm_resource_group" "batch" {
-  name     = "${var.prefix}-covalent-batch"
+  name     = "${var.prefix}-batch"
   count    = var.create_batch_account ? 1 : 0
   location = var.region
 }
@@ -43,7 +43,7 @@ data "azurerm_resource_group" "batch" {
 }
 
 resource "azurerm_batch_account" "covalent" {
-  name                = "${var.prefix}covalentbatch"
+  name                = "${var.prefix}batch"
   count               = var.create_batch_account ? 1 : 0
   resource_group_name = azurerm_resource_group.batch[0].name
   location            = azurerm_resource_group.batch[0].location

@@ -15,7 +15,7 @@
 # limitations under the License.
 
 resource "azurerm_container_registry" "batch" {
-  name                = "${var.prefix}covalentbatch"
+  name                = "${var.prefix}batch"
   resource_group_name = var.create_batch_account ? azurerm_resource_group.batch[0].name : data.azurerm_resource_group.batch[0].name
   location            = var.region
 
@@ -33,7 +33,7 @@ resource "azurerm_container_registry" "batch" {
 }
 
 resource "azurerm_storage_account" "batch" {
-  name                = "${var.prefix}covalentbatch"
+  name                = "${var.prefix}batch"
   resource_group_name = var.create_batch_account ? azurerm_resource_group.batch[0].name : data.azurerm_resource_group.batch[0].name
   location            = var.region
 

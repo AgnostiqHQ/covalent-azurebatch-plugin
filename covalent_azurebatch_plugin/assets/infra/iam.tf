@@ -19,7 +19,7 @@
 #########################################
 
 resource "azurerm_user_assigned_identity" "batch" {
-  name                = "${var.prefix}covalentbatch"
+  name                = "${var.prefix}batch"
   resource_group_name = var.create_batch_account ? azurerm_resource_group.batch[0].name : data.azurerm_resource_group.batch[0].name
   location            = var.region
 }
@@ -63,7 +63,7 @@ resource "azuread_service_principal_password" "covalent_plugin" {
 }
 
 resource "azurerm_role_definition" "covalent_batch" {
-  name        = "${var.prefix}covalentbatch"
+  name        = "${var.prefix}batch"
   scope       = "/subscriptions/${local.subscription_id}"
   description = "Covalent Azure Batch Permissions"
   permissions {
