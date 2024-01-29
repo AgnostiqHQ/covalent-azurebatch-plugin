@@ -1,3 +1,4 @@
 include VERSION
 include requirements.txt
+include covalent_azurebatch_plugin/assets/infra/Dockerfile
 recursive-include covalent_azurebatch_plugin/assets/infra/*.tf
