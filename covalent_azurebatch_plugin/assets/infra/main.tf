@@ -28,7 +28,7 @@ data "azurerm_client_config" "current" {}
 locals {
   tenant_id       = coalesce(var.tenant_id, data.azurerm_client_config.current.tenant_id)
   subscription_id = coalesce(var.subscription_id, data.azurerm_client_config.current.subscription_id)
-  owners          = length(var.owners) > 0 ? var.owners : [data.azurerm_client_config.current.object_id]
+  owners          = coalesce(var.owners, [data.azurerm_client_config.current.object_id])
 }
 
 resource "azurerm_resource_group" "batch" {
@@ -108,14 +108,14 @@ EOF
 resource "local_file" "executor_config" {
   filename = "${path.module}/azurebatch.conf"
   content = templatefile("${path.module}/azurebatch.conf.tftpl", {
-    subscription_id        = "${local.subscription_id}"
     tenant_id              = "${local.tenant_id}"
-    client_id              = "${data.azurerm_client_config.current.client_id}"
+    subscription_id        = "${local.subscription_id}"
     batch_account_url      = var.create_batch_account ? "https://${azurerm_batch_account.covalent[0].account_endpoint}" : "https://${data.azurerm_batch_account.covalent[0].account_endpoint}"
     batch_account_domain   = "batch.core.windows.net"
     storage_account_name   = "${azurerm_storage_account.batch.name}"
     storage_account_domain = "blob.core.windows.net"
     pool_id                = "${azurerm_batch_pool.covalent.name}"
     retries                = 3
+    base_image_uri         = "${azurerm_container_registry.batch.login_server}/covalent-executor-base"
   })
 }
