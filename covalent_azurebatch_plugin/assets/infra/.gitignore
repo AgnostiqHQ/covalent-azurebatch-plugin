@@ -1,0 +1,4 @@
+*.conf
+.docker
+*.sh
+*.log

@@ -9,8 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Required terraform version to ">= 1.6"
-- Use `templatefile` instead of `data "template_file` ...
+- Use `templatefile` instead of `data "template_file`
+
+## [0.17.0] - 2024-01-17
+
+### Added
+
+- Added `covalent_package_version` so that we can specify the version of the covalent to use when building the docker image
+- Added `covalent_package_version`, `create_batch_acount`, `batch_account_name`, and `batch_resource_group` to `ExecutorInfraDefaults` to accept arguments from the `covalent deploy` command
+- Added `_EXECUTOR_PLUGIN_DEFAULTS` variable to populate Azure Batch plugin defaults in the `covalent` config file
+- Added `.gitignore` file in the `infra` directory to ignore more unnecessary files from being committed
+
+### Fixed
+
+- Added `subscription_id`, `owners`, `tenant_id`, to ExecutorInfraDefaults to accept arguments from the `covalent deploy` command
+- Fixed `pool_id` value in config file
+- Fixed `gcc` installation in the docker image
+
+### Changed
+
+- Modified the `owners` variable to have a default value
+- `base_image_uri` and `client_secret` are now also saved in the `covalent` config file so that the user doesn't have to manually go and look for their values in the tfstate file
 
 ## [0.16.0] - 2023-11-21
 

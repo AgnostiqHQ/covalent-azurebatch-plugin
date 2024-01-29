@@ -27,23 +27,37 @@ provider "azurerm" {
 
 resource "azurerm_resource_group" "batch" {
   name     = "${var.prefix}-covalent-batch"
+  count    = var.create_batch_account ? 1 : 0
   location = var.region
+}
+
+data "azurerm_resource_group" "batch" {
+  name  = var.batch_resource_group
+  count = var.create_batch_account ? 0 : 1
 }
 
 resource "azurerm_batch_account" "covalent" {
   name                = "${var.prefix}covalentbatch"
-  resource_group_name = azurerm_resource_group.batch.name
-  location            = azurerm_resource_group.batch.location
+  count               = var.create_batch_account ? 1 : 0
+  resource_group_name = azurerm_resource_group.batch[0].name
+  location            = azurerm_resource_group.batch[0].location
 
   storage_account_id                  = azurerm_storage_account.batch.id
   storage_account_authentication_mode = "StorageKeys"
 }
 
-resource "azurerm_batch_pool" "covalent" {
-  name                = "default"
-  resource_group_name = azurerm_resource_group.batch.name
+data "azurerm_batch_account" "covalent" {
+  name                = var.batch_account_name
+  count               = var.create_batch_account ? 0 : 1
+  resource_group_name = data.azurerm_resource_group.batch[0].name
+}
 
-  account_name = azurerm_batch_account.covalent.name
+
+resource "azurerm_batch_pool" "covalent" {
+  name                = "${var.prefix}-default"
+  resource_group_name = var.create_batch_account ? azurerm_resource_group.batch[0].name : data.azurerm_resource_group.batch[0].name
+
+  account_name = var.create_batch_account ? azurerm_batch_account.covalent[0].name : data.azurerm_batch_account.covalent[0].name
   display_name = "Covalent Azure Plugin Default Pool"
 
   vm_size           = var.vm_name
@@ -90,12 +104,20 @@ resource "local_file" "executor_config" {
   content = templatefile("${path.module}/azurebatch.conf.tftpl", {
     subscription_id        = var.subscription_id
     tenant_id              = var.tenant_id
-    client_id              = "${azuread_application.batch.application_id}"
-    batch_account_url      = "https://${azurerm_batch_account.covalent.account_endpoint}"
+    client_id              = "${azuread_application.batch.client_id}"
+    client_secret          = "${azuread_service_principal_password.covalent_plugin.value}"
+    batch_account_url      = var.create_batch_account ? "https://${azurerm_batch_account.covalent[0].account_endpoint}" : "https://${data.azurerm_batch_account.covalent[0].account_endpoint}"
     batch_account_domain   = "batch.core.windows.net"
     storage_account_name   = "${azurerm_storage_account.batch.name}"
     storage_account_domain = "blob.core.windows.net"
     pool_id                = "${azurerm_batch_pool.covalent.name}"
     retries                = 3
-  })
+    base_image_uri         = "${azurerm_container_registry.batch.login_server}/covalent-executor-base:latest"
+    }
+  )
+}
+
+resource "local_file" "executor_config" {
+  content  = data.template_file.executor_config.rendered
+  filename = "${path.module}/azurebatch.conf"
 }
