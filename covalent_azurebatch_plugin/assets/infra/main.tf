@@ -26,30 +26,44 @@ provider "azurerm" {
 data "azurerm_client_config" "current" {}
 
 locals {
-  tenant_id       = var.tenant_id != "" ? var.tenant_id : data.azurerm_client_config.current.tenant_id
-  subscription_id = var.subscription_id != "" ? var.subscription_id : data.azurerm_client_config.current.subscription_id
+  tenant_id       = coalesce(var.tenant_id, data.azurerm_client_config.current.tenant_id)
+  subscription_id = coalesce(var.subscription_id, data.azurerm_client_config.current.subscription_id)
   owners          = length(var.owners) > 0 ? var.owners : [data.azurerm_client_config.current.object_id]
 }
 
 resource "azurerm_resource_group" "batch" {
   name     = "${var.prefix}-covalent-batch"
+  count    = var.create_batch_account ? 1 : 0
   location = var.region
+}
+
+data "azurerm_resource_group" "batch" {
+  name  = var.batch_resource_group
+  count = var.create_batch_account ? 0 : 1
 }
 
 resource "azurerm_batch_account" "covalent" {
   name                = "${var.prefix}covalentbatch"
-  resource_group_name = azurerm_resource_group.batch.name
-  location            = azurerm_resource_group.batch.location
+  count               = var.create_batch_account ? 1 : 0
+  resource_group_name = azurerm_resource_group.batch[0].name
+  location            = azurerm_resource_group.batch[0].location
 
   storage_account_id                  = azurerm_storage_account.batch.id
   storage_account_authentication_mode = "StorageKeys"
 }
 
-resource "azurerm_batch_pool" "covalent" {
-  name                = "default"
-  resource_group_name = azurerm_resource_group.batch.name
+data "azurerm_batch_account" "covalent" {
+  name                = var.batch_account_name
+  count               = var.create_batch_account ? 0 : 1
+  resource_group_name = data.azurerm_resource_group.batch[0].name
+}
 
-  account_name = azurerm_batch_account.covalent.name
+
+resource "azurerm_batch_pool" "covalent" {
+  name                = "${var.prefix}-default"
+  resource_group_name = var.create_batch_account ? azurerm_resource_group.batch[0].name : data.azurerm_resource_group.batch[0].name
+
+  account_name = var.create_batch_account ? azurerm_batch_account.covalent[0].name : data.azurerm_batch_account.covalent[0].name
   display_name = "Covalent Azure Plugin Default Pool"
 
   vm_size           = var.vm_name

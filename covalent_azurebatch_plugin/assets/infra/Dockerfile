@@ -17,15 +17,23 @@
 ARG COVALENT_BASE_IMAGE
 FROM ${COVALENT_BASE_IMAGE}
 
+ARG COVALENT_PACKAGE_VERSION
+
 USER root
 
-RUN apt-get update && apt-get install -y gcc \
+RUN apt-get update && apt-get install gcc -y \
   && rm -rf /var/lib/apt/lists/* \
   && pip install --no-cache-dir --upgrade \
   azure-batch==12.0.0 \
   azure-identity==1.11.0 \
-  azure-storage-blob==12.14.1 \
-  "covalent>=0.202.0,<1"
+  azure-storage-blob==12.14.1
+
+
+RUN if [ -z "$COVALENT_PACKAGE_VERSION" ]; then \
+		pip install covalent; else \
+		pip install "covalent==$COVALENT_PACKAGE_VERSION"; \
+	fi
+
 
 WORKDIR /covalent
 

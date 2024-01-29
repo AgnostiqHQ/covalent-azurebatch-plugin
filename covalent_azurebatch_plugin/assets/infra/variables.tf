@@ -43,9 +43,34 @@ variable "owners" {
   default     = []
   description = "List of owner IDs for the service principal credentials"
   type        = list(string)
+  default     = []
 }
 
 variable "vm_name" {
   description = "Name of the VM used in the Batch pool"
   default     = "Standard_A1_v2"
+}
+
+variable "covalent_package_version" {
+  type        = string
+  description = "Covalent version to be installed in the container, if not specified the latest stable version will be installed"
+  default     = ""
+}
+
+variable "create_batch_account" {
+  type        = bool
+  description = "Whether to create a new Batch account or use an existing one"
+  default     = true
+}
+
+variable "batch_account_name" {
+  type        = string
+  description = "Name of the Batch account to be used"
+  default     = ""
+}
+
+variable "batch_resource_group" {
+  type        = string
+  description = "Name of the resource group containing the Batch account to be used"
+  default     = ""
 }

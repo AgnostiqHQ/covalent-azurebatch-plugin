@@ -41,7 +41,7 @@ output "covalent_azurebatch_object" {
         tenant_id="${local.tenant_id}",
         client_id="${data.azurerm_client_config.current.client_id}",
         client_secret=plugin_client_secret,
-        batch_account_url="https://${azurerm_batch_account.covalent.account_endpoint}",
+        batch_account_url="https://${var.create_batch_account ? azurerm_batch_account.covalent[0].account_endpoint : data.azurerm_batch_account.covalent[0].account_endpoint}",
         storage_account_name="${azurerm_storage_account.batch.name}",
         pool_id="${azurerm_batch_pool.covalent.name}",
     )

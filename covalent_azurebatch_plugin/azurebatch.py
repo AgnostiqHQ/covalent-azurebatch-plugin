@@ -66,7 +66,9 @@ class ExecutorInfraDefaults(BaseModel):
     """
 
     prefix: Optional[str] = "covalent-batch"
-    tenant_id: str = ""
+    subscription_id: str
+    owners: List[str] = []
+    tenant_id: str
     client_id: str = ""
     client_secret: str = ""
     batch_account_url: str = ""
@@ -81,9 +83,15 @@ class ExecutorInfraDefaults(BaseModel):
     time_limit: int = 300
     cache_dir: str = "/tmp/covalent"
     poll_freq: int = 30
+    covalent_package_version: str = ""
+    create_batch_account: bool = True
+    batch_account_name: str = ""
+    batch_resource_group: str = ""
 
 
 EXECUTOR_PLUGIN_NAME = "AzureBatchExecutor"
+
+_EXECUTOR_PLUGIN_DEFAULTS = ExecutorPluginDefaults().dict()
 
 FUNC_FILENAME = "func-{dispatch_id}-{node_id}.pkl"
 RESULT_FILENAME = "result-{dispatch_id}-{node_id}.pkl"

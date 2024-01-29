@@ -20,8 +20,8 @@
 
 resource "azurerm_user_assigned_identity" "batch" {
   name                = "${var.prefix}covalentbatch"
-  resource_group_name = azurerm_resource_group.batch.name
-  location            = azurerm_resource_group.batch.location
+  resource_group_name = var.create_batch_account ? azurerm_resource_group.batch[0].name : data.azurerm_resource_group.batch[0].name
+  location            = var.region
 }
 
 resource "azurerm_role_assignment" "batch_to_acr" {
