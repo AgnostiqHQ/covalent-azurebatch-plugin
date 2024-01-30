@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.17.0] - 2024-01-17
 
+## Changed
+
+- Read id's from user's config instead of input (no more required args)
+- Update executor config output, remove unused
+- Make `owners` var optional
+- Conform to 'alphanumeric chars only' rule for resource names
+- Use `templatefile` instead of `template_file` (MacOS compatibility)
+
 ### Added
 
 - Added `covalent_package_version` so that we can specify the version of the covalent to use when building the docker image
