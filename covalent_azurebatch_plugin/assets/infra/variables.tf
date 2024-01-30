@@ -30,17 +30,19 @@ variable "environment" {
 }
 
 variable "tenant_id" {
+  default     = ""
   description = "Azure tenant ID"
 }
 
 variable "subscription_id" {
+  default     = ""
   description = "Azure subscription ID"
 }
 
 variable "owners" {
+  default     = null
   description = "List of owner IDs for the service principal credentials"
   type        = list(string)
-  default     = []
 }
 
 variable "vm_name" {

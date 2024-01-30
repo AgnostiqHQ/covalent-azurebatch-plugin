@@ -15,8 +15,6 @@
 # limitations under the License.
 
 provider "azurerm" {
-  tenant_id       = var.tenant_id
-  subscription_id = var.subscription_id
 
   features {
     resource_group {
@@ -25,19 +23,27 @@ provider "azurerm" {
   }
 }
 
+data "azurerm_client_config" "current" {}
+
+locals {
+  tenant_id       = coalesce(var.tenant_id, data.azurerm_client_config.current.tenant_id)
+  subscription_id = coalesce(var.subscription_id, data.azurerm_client_config.current.subscription_id)
+  owners          = coalesce(var.owners, [data.azurerm_client_config.current.object_id])
+}
+
 resource "azurerm_resource_group" "batch" {
-  name     = "${var.prefix}-covalent-batch"
+  name     = "${var.prefix}-batch"
   count    = var.create_batch_account ? 1 : 0
   location = var.region
 }
 
 data "azurerm_resource_group" "batch" {
-  name =  var.batch_resource_group
+  name  = var.batch_resource_group
   count = var.create_batch_account ? 0 : 1
 }
 
 resource "azurerm_batch_account" "covalent" {
-  name                = "${var.prefix}covalentbatch"
+  name                = "${var.prefix}batch"
   count               = var.create_batch_account ? 1 : 0
   resource_group_name = azurerm_resource_group.batch[0].name
   location            = azurerm_resource_group.batch[0].location
@@ -99,25 +105,17 @@ EOF
   }
 }
 
-data "template_file" "executor_config" {
-  template = file("${path.module}/azurebatch.conf.tftpl")
-
-  vars = {
-    subscription_id        = var.subscription_id
-    tenant_id              = var.tenant_id
-    client_id              = "${azuread_application.batch.client_id}"
-    client_secret          = "${azuread_service_principal_password.covalent_plugin.value}"
+resource "local_file" "executor_config" {
+  filename = "${path.module}/azurebatch.conf"
+  content = templatefile("${path.module}/azurebatch.conf.tftpl", {
+    tenant_id              = "${local.tenant_id}"
+    subscription_id        = "${local.subscription_id}"
     batch_account_url      = var.create_batch_account ? "https://${azurerm_batch_account.covalent[0].account_endpoint}" : "https://${data.azurerm_batch_account.covalent[0].account_endpoint}"
     batch_account_domain   = "batch.core.windows.net"
     storage_account_name   = "${azurerm_storage_account.batch.name}"
     storage_account_domain = "blob.core.windows.net"
     pool_id                = "${azurerm_batch_pool.covalent.name}"
     retries                = 3
-    base_image_uri         = "${azurerm_container_registry.batch.login_server}/covalent-executor-base:latest"
-  }
-}
-
-resource "local_file" "executor_config" {
-  content  = data.template_file.executor_config.rendered
-  filename = "${path.module}/azurebatch.conf"
+    base_image_uri         = "${azurerm_container_registry.batch.login_server}/covalent-executor-base"
+  })
 }

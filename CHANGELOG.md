@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+
+### Changed
+
+- Read id's from user's config instead of input (no more required args)
+- Update executor config output, remove unused
+- Make `owners` var optional
+- Conform to 'alphanumeric chars only' rule for resource names
+- Use `templatefile` instead of `template_file` (MacOS compatibility)
+
 ## [0.17.0] - 2024-01-17
 
 ### Added

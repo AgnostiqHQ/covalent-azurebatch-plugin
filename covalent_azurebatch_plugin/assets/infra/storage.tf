@@ -15,7 +15,7 @@
 # limitations under the License.
 
 resource "azurerm_container_registry" "batch" {
-  name                = "${var.prefix}covalentbatch"
+  name                = "${var.prefix}batch"
   resource_group_name = var.create_batch_account ? azurerm_resource_group.batch[0].name : data.azurerm_resource_group.batch[0].name
   location            = var.region
 
@@ -25,7 +25,7 @@ resource "azurerm_container_registry" "batch" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<EOL
       set -eu -o pipefail
-      docker build --no-cache --build-arg COVALENT_BASE_IMAGE=python:3.8-slim-bullseye --build-arg COVALENT_PACKAGE_VERSION=${var.covalent_package_version} --tag ${self.login_server}/covalent-executor-base:latest .
+      docker buildx build . --platform linux/amd64 --no-cache --build-arg COVALENT_BASE_IMAGE=python:3.8-slim-bullseye --build-arg COVALENT_PACKAGE_VERSION="${var.covalent_package_version}" --tag ${self.login_server}/covalent-executor-base:latest
       az acr login --name ${self.name}
       docker push -a ${self.login_server}/covalent-executor-base
     EOL
@@ -33,7 +33,7 @@ resource "azurerm_container_registry" "batch" {
 }
 
 resource "azurerm_storage_account" "batch" {
-  name                = "${var.prefix}covalentbatch"
+  name                = "${var.prefix}batch"
   resource_group_name = var.create_batch_account ? azurerm_resource_group.batch[0].name : data.azurerm_resource_group.batch[0].name
   location            = var.region
 

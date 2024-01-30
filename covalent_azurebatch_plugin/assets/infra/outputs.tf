@@ -14,6 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+data "azuread_user" "current" {
+  object_id = data.azurerm_client_config.current.object_id
+}
+
 output "acr_login_server" {
   value = azurerm_container_registry.batch.login_server
 }
@@ -23,7 +27,7 @@ output "user_identity_resource_id" {
 }
 
 output "plugin_client_username" {
-  value = azuread_application.batch.client_id
+  value = data.azuread_user.current.user_principal_name
 }
 
 output "plugin_client_secret" {
@@ -34,8 +38,8 @@ output "plugin_client_secret" {
 output "covalent_azurebatch_object" {
   value = <<EOT
     executor = ct.executor.AzureBatchExecutor(
-        tenant_id="${var.tenant_id}",
-        client_id="${azuread_application.batch.application_id}",
+        tenant_id="${local.tenant_id}",
+        client_id="${data.azurerm_client_config.current.client_id}",
         client_secret=plugin_client_secret,
         batch_account_url="https://${var.create_batch_account ? azurerm_batch_account.covalent[0].account_endpoint : data.azurerm_batch_account.covalent[0].account_endpoint}",
         storage_account_name="${azurerm_storage_account.batch.name}",
