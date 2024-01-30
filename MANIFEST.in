@@ -1,4 +1,6 @@
 include VERSION
 include requirements.txt
 include covalent_azurebatch_plugin/assets/infra/Dockerfile
+include covalent_azurebatch_plugin/assets/infra/azurebatch.conf.tftpl
+include covalent_azurebatch_plugin/assets/infra/exec.py
 recursive-include covalent_azurebatch_plugin/assets/infra/*.tf
